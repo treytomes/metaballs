@@ -1,12 +1,12 @@
 namespace Metaballs.Brushes;
 
-class BlobbyCircleMetaballsBrush : IMetaballsBrush
+class BlobbyCircleMetaballsBrush : IFireBrush
 {
 	// Note: `init` = the property can be modified as part of the instance initializer block, but not after.
 	public float Flicker { get; init; } = 0.7f;
 	public float Blend { get; init; } = 0.3f;
 
-	public void Draw(MetaballsBuffer buffer, int sx, int sy, int size)
+	public void Draw(FireBuffer buffer, int sx, int sy, int size)
 	{
 		var sizeSq = size * size;
 		for (var dy = -size; dy <= size; dy++)

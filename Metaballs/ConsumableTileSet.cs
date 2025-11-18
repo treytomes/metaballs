@@ -25,7 +25,7 @@ class ConsumableTileSet
 
 	#region Methods
 
-	public void Render(IRenderingContext rc, GlyphSet<Bitmap> tiles, MetaballsBuffer fire)
+	public void Render(IRenderingContext rc, GlyphSet<Bitmap> tiles, FireBuffer fire)
 	{
 		_fountain.Render(fire);
 		foreach (var tile in _tiles)

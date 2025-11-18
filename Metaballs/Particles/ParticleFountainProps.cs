@@ -11,6 +11,6 @@ class ParticleFountainProps
 	public Vector2 Acceleration { get; init; }
 	public TimeSpan LifeSpan { get; init; }
 	public float Scale { get; set; }
-	public required IMetaballsBrush Brush { get; init; }
+	public required IFireBrush Brush { get; init; }
 	public float Noise { get; init; }
 }

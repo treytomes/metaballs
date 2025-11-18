@@ -86,7 +86,7 @@ class ParticleFountain
 		}
 	}
 
-	public void Render(MetaballsBuffer buffer)
+	public void Render(FireBuffer buffer)
 	{
 		if (!IsVisible) return;
 

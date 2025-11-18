@@ -11,7 +11,7 @@ class Particle
 {
 	#region Constructors
 
-	public Particle(Vector2 position, Vector2 velocity, Vector2 acceleration, TimeSpan lifeSpan, float scale, IMetaballsBrush brush)
+	public Particle(Vector2 position, Vector2 velocity, Vector2 acceleration, TimeSpan lifeSpan, float scale, IFireBrush brush)
 	{
 		Position = position;
 		Velocity = velocity;
@@ -30,7 +30,7 @@ class Particle
 	public Vector2 Acceleration { get; private set; }
 	public TimeSpan LifeSpan { get; private set; }
 	public float Scale { get; private set; }
-	public IMetaballsBrush Brush { get; private set; }
+	public IFireBrush Brush { get; private set; }
 
 	public bool IsAlive => LifeSpan.TotalSeconds > 0;
 
@@ -45,7 +45,7 @@ class Particle
 		LifeSpan -= gameTime.ElapsedTime;
 	}
 
-	public void Render(MetaballsBuffer buffer)
+	public void Render(FireBuffer buffer)
 	{
 		Brush.Draw(buffer, (int)Position.X, (int)Position.Y, (int)(LifeSpan.TotalSeconds * Scale));
 	}

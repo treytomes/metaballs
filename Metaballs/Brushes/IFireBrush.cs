@@ -1,6 +1,6 @@
 namespace Metaballs.Brushes;
 
-interface IMetaballsBrush
+interface IFireBrush
 {
-	void Draw(MetaballsBuffer buffer, int sx, int sy, int size);
+	void Draw(FireBuffer buffer, int sx, int sy, int size);
 }

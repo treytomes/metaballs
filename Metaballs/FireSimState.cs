@@ -21,7 +21,7 @@ namespace Metaballs;
 /// <remarks>
 /// Metaballs demo from the algorithm described here: https://lodev.org/cgtutor/fire.html
 /// </remarks>
-class MainState : GameState
+class FireSimState : GameState
 {
 	#region Fields
 
@@ -43,7 +43,7 @@ class MainState : GameState
 	/// </summary>
 	/// <param name="resources">Resource manager for loading assets.</param>
 	/// <param name="rc">Rendering context for drawing.</param>
-	public MainState(IResourceManager resources, IRenderingContext rc)
+	public FireSimState(IResourceManager resources, IRenderingContext rc)
 		: base(resources, rc)
 	{
 		_fire = new(rc.Width, rc.Height, TimeSpan.FromMilliseconds(10));

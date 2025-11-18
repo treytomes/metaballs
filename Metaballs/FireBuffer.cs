@@ -5,7 +5,7 @@ using RetroTK.Gfx;
 
 namespace Metaballs;
 
-class MetaballsBuffer
+class FireBuffer
 {
 	#region Fields
 
@@ -19,7 +19,7 @@ class MetaballsBuffer
 	// Hue goes from 0 to 85: red to yellow.
 	// Saturation is always the maximum: 255.
 	// Lightness is 0..255 for x=0..128, and 255 for x=128..255.
-	private readonly IPalette _palette = new MetaballsPalette();
+	private readonly IPalette _palette = new FirePalette();
 	private readonly EventTrigger _flameUpdateTrigger;
 
 	#endregion
@@ -27,7 +27,7 @@ class MetaballsBuffer
 	#region Constructors
 
 	/// <param name="simulationSpeed">Measured in milliseconds between flame updates.</param>
-	public MetaballsBuffer(int width, int height, TimeSpan simulationSpeed)
+	public FireBuffer(int width, int height, TimeSpan simulationSpeed)
 	{
 		_flameUpdateTrigger = new(simulationSpeed);
 		Width = width;

@@ -1,8 +1,8 @@
 namespace Metaballs.Brushes;
 
-class NoisyCircleMetaballsBrush : IMetaballsBrush
+class NoisyCircleMetaballsBrush : IFireBrush
 {
-	public void Draw(MetaballsBuffer buffer, int sx, int sy, int size)
+	public void Draw(FireBuffer buffer, int sx, int sy, int size)
 	{
 		var sizeSq = size * size;
 		for (var dy = -size; dy <= size; dy++)
