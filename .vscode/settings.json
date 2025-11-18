@@ -1,0 +1,41 @@
+{
+	"cSpell.words": [
+		"appsettings",
+		"Blobby",
+		"Bresenham's",
+		"Cloneable",
+		"Croppable",
+		"finalizer",
+		"Fract",
+		"glsl",
+		"Lerp",
+		"Metaballs",
+		"Newtonsoft",
+		"OPENGL",
+		"ppos",
+		"relu",
+		"Roguelike",
+		"SSBO",
+		"underpopulation",
+		"WASD"
+	],
+	"editor.tabSize": 4,
+	"editor.detectIndentation": false,
+	"editor.insertSpaces": false,
+	"editor.formatOnSave": true,
+	"editor.formatOnType": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll": "always",
+		"source.fixAll.eslint": "always",
+		"source.addMissingImports": "always"
+	},
+	// C# Dev Kit formatting settings  
+	"[csharp]": {
+		"editor.defaultFormatter": "ms-dotnettools.csharp",
+		"editor.codeActionsOnSave": {
+			"source.fixAll": "always"
+		}
+	},
+	"csharp.debug.expressionEvaluationOptions.allowImplicitFuncEval": false,
+	"dotnet.defaultSolution": "metaballs.sln",
+}
