@@ -1,5 +1,6 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Metaballs;
 
@@ -76,6 +77,12 @@ class EventBlobCollection : BlobCollection<EventBlob>
 		if (MouseFocus != null)
 		{
 			MouseFocus.LoseMouseFocus();
+
+			if (e.Button == MouseButton.Right)
+			{
+				_blobs.Remove(MouseFocus);
+			}
+
 			MouseFocus = null;
 			return true;
 		}
