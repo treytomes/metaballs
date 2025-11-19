@@ -74,7 +74,6 @@ class Blob
 
 	public void SetRadius(int value)
 	{
-		Console.WriteLine("value=" + value);
 		if (value < 1) value = 1;
 		Radius = value;
 	}
