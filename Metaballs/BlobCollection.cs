@@ -7,6 +7,20 @@ namespace Metaballs;
 class BlobCollection<TBlob>
 	where TBlob : Blob
 {
+	#region Constants
+
+	/// <summary>
+	/// Bayer 4x4 dithering matrix.
+	/// </summary>
+	private static readonly int[,] BAYER_MATRIX = new int[,] {
+		{  0, 12,  3, 15 },
+		{  8,  4, 11,  7 },
+		{  2, 14,  1, 13 },
+		{ 10,  6,  9,  5 }
+	};
+
+	#endregion
+
 	#region Fields
 
 	private readonly MetaballsSettings _settings;
@@ -30,6 +44,16 @@ class BlobCollection<TBlob>
 	public RadialColor OutlineColor { get; set; } = RadialColor.Green;
 	private bool Interpolated => _settings.Interpolated;
 	private int GridResolution => _settings.GridResolution;
+
+	private readonly List<RadialColor> COLORS = [
+			new RadialColor(0, 0, 0),
+			new RadialColor(1, 0, 0),
+			new RadialColor(2, 1, 0),
+			new RadialColor(3, 2, 1),
+			new RadialColor(4, 3, 2),
+			new RadialColor(5, 4, 3)
+	];
+
 
 	#endregion
 
@@ -171,7 +195,68 @@ class BlobCollection<TBlob>
 			});
 		});
 
+		// Note: I figured out the inverse Bayer matrix trick while trying to figure out how to render a heat field.
+		// It's not quite the effect I'm looking for here though.
+		for (var y = 0; y < rc.Height; y++)
+		{
+			for (var x = 0; x < rc.Width; x++)
+			{
+				var pos = new Vector2(x, y);
+
+				var intensity = _samples[y][x] ?? 0f; // CalculateTemperatureAtPoint(pos) / 100.0f;
+
+				// Calculate dithering probability.
+				intensity = RetroTK.MathHelper.Clamp(intensity, 0.0f, 1.0f);
+
+				// Get the appropriate threshold from the Bayer matrix (0-15, normalized to 0.0-1.0)
+				var bayerX = RetroTK.MathHelper.Modulus(Math.Abs((int)pos.X), 4);
+				var bayerY = RetroTK.MathHelper.Modulus(Math.Abs((int)pos.Y), 4);
+				var threshold = BAYER_MATRIX[bayerY, bayerX] / 16.0f;
+				var colorIndex = IntensityToColorIndex(intensity);
+				if (intensity >= threshold)
+				{
+					var color = COLORS[colorIndex];
+					if (color.Index != 0)
+					{
+						rc.SetPixel(pos, color);
+					}
+				}
+				else
+				{
+					colorIndex -= 1;
+					if (colorIndex > 0)
+					{
+						var color = COLORS[colorIndex];
+						if (color.Index != 0)
+						{
+							rc.SetPixel(pos, color);
+						}
+					}
+				}
+			}
+		}
+
+		Console.WriteLine("Sample: " + (_samples[(int)_blobs[0].Position.Y][(int)_blobs[0].Position.X] ?? 9999));
+
 		Parallel.ForEach(_blobs, b => b.Render(rc));
+	}
+
+	/// <summary>
+	/// </summary>
+	/// <param name="intensity">A value in [0, 1].</param>
+	/// <returns></returns>
+	private int IntensityToColorIndex(float intensity)
+	{
+		return (int)(intensity * 5.0f);
+	}
+
+	/// <summary>
+	/// </summary>
+	/// <param name="intensity">A value in [0, 1].</param>
+	/// <returns></returns>
+	private RadialColor IntensityToColor(float intensity)
+	{
+		return COLORS[IntensityToColorIndex(intensity)];
 	}
 
 	private static void RenderSegment(IRenderingContext rc, Vector2 from, Vector2 to, RadialColor color)
