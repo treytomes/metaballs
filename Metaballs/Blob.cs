@@ -6,10 +6,6 @@ namespace Metaballs;
 
 class Blob
 {
-	#region Fields
-
-	#endregion
-
 	#region Constructors
 
 	public Blob(Vector2 position, int radius)
@@ -27,9 +23,11 @@ class Blob
 
 	#region Properties
 
+	public virtual bool IsActive { get; } = true;
+
 	public Vector2 Position { get; private set; }
 	public int Radius { get; private set; }
-	public RadialColor Color { get; private set; } = RadialColor.Red;
+	public virtual RadialColor Color { get; } = RadialColor.Red;
 	public Vector2 Velocity { get; private set; }
 
 	public float Left => Position.X - Radius;
@@ -61,7 +59,28 @@ class Blob
 
 	public void Update(GameTime gameTime)
 	{
-		Position += Velocity * (float)gameTime.ElapsedTime.TotalSeconds;
+		if (IsActive)
+		{
+			Position += Velocity * (float)gameTime.ElapsedTime.TotalSeconds;
+		}
+	}
+
+	public bool Contains(Vector2 pnt)
+	{
+		var distance = pnt - Position;
+		return distance.LengthSquared <= Radius * Radius;
+	}
+
+	public void SetRadius(int value)
+	{
+		Console.WriteLine("value=" + value);
+		if (value < 1) value = 1;
+		Radius = value;
+	}
+
+	public void MoveBy(Vector2 delta)
+	{
+		Position += delta;
 	}
 
 	#endregion

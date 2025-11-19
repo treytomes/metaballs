@@ -23,8 +23,7 @@ class MainState : GameState
 	private bool _isMouseDown = false;
 	private Vector2 _mousePosition = Vector2.Zero;
 
-	private List<List<float?>> _samples = new();
-	private List<Blob> _blobs = new();
+	private EventBlobCollection _blobs = new();
 
 	#endregion
 
@@ -55,7 +54,7 @@ class MainState : GameState
 
 		for (var n = 0; n < MetaballsConfig.NumBlobs; n++)
 		{
-			_blobs.Add(factory.CreateRandomBlob());
+			_blobs.Add(new EventBlob(factory.CreateRandomBlob()));
 		}
 	}
 
@@ -105,103 +104,7 @@ class MainState : GameState
 			}
 		}
 
-
-		// Render the line cases.
-		for (var sy = 0; sy < _samples.Count - 2; sy++)
-		{
-			for (var sx = 0; sx < _samples[sy].Count - 2; sx++)
-			{
-				// if PRINT_SAMPLES then
-				// 	x = sx * GRID_RESOLUTION
-				// 	y = sy * GRID_RESOLUTION
-				// 	sample = calculateSample(x, y)
-				// 	sample = floor(sample * 100) / 100
-				// 	gfx.print sample, x -16, y - 16, color.silver, "small"
-				// end if
-
-				var bl = CalculateSample(sx, sy) ?? 0;
-				var br = CalculateSample(sx + 1, sy) ?? 0;
-				var tl = CalculateSample(sx, sy + 1) ?? 0;
-				var tr = CalculateSample(sx + 1, sy + 1) ?? 0;
-
-				Vector2 a, b, c, d;
-
-				if (MetaballsConfig.Interpolated)
-				{
-					a = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, tl, tr),
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution
-					);
-					b = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, br, tr)
-					);
-					c = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, bl, br),
-						sy * MetaballsConfig.GridResolution
-					);
-					d = new Vector2(
-						sx * MetaballsConfig.GridResolution,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, bl, tl)
-					);
-				}
-				else
-				{
-					a = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution
-					);
-					b = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2
-					);
-					c = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2,
-						sy * MetaballsConfig.GridResolution
-					);
-					d = new Vector2(
-						sx * MetaballsConfig.GridResolution,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2
-					);
-				}
-
-				bl = bl >= 1 ? 1 : 0;
-				br = br >= 1 ? 1 : 0;
-				tl = tl >= 1 ? 1 : 0;
-				tr = tr >= 1 ? 1 : 0;
-				var blobCase = bl + br * 2 + tr * 4 + tl * 8;
-
-				if (blobCase == 0 || blobCase == 15)
-					continue;
-				else if (blobCase == 1 || blobCase == 14)
-					RenderLine(d, c);
-				else if (blobCase == 2 || blobCase == 13)
-					RenderLine(b, c);
-				else if (blobCase == 3 || blobCase == 12)
-					RenderLine(d, b);
-				else if (blobCase == 4 || blobCase == 11)
-					RenderLine(a, b);
-				else if (blobCase == 5)
-				{
-					RenderLine(d, a);
-					RenderLine(c, b);
-				}
-				else if (blobCase == 6 || blobCase == 9)
-					RenderLine(c, a);
-				else if (blobCase == 7 || blobCase == 8)
-					RenderLine(d, a);
-				else if (blobCase == 10)
-				{
-					RenderLine(a, b);
-					RenderLine(c, d);
-				}
-			}
-		}
-
-		foreach (var blob in _blobs)
-		{
-			blob.Render(RC);
-		}
+		_blobs.Render(RC);
 
 		base.Render(gameTime);
 	}
@@ -213,12 +116,8 @@ class MainState : GameState
 	public override void Update(GameTime gameTime)
 	{
 		base.Update(gameTime);
-		ResetSamples();
 
-		foreach (var blob in _blobs)
-		{
-			blob.Update(gameTime);
-		}
+		_blobs.Update(gameTime);
 	}
 
 	/// <summary>
@@ -238,6 +137,10 @@ class MainState : GameState
 
 	public override bool MouseWheel(MouseWheelEventArgs e)
 	{
+		if (_blobs.MouseWheel(e))
+		{
+			return true;
+		}
 		return base.MouseWheel(e);
 	}
 
@@ -248,10 +151,16 @@ class MainState : GameState
 	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool MouseMove(MouseMoveEventArgs e)
 	{
-		_mousePosition = e.Position;
-		if (_isMouseDown)
+		// _mousePosition = e.Position;
+		// if (_isMouseDown)
+		// {
+		// }
+
+		if (_blobs.MouseMove(e))
 		{
+			return true;
 		}
+
 		return base.MouseMove(e);
 	}
 
@@ -262,11 +171,12 @@ class MainState : GameState
 	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool MouseDown(MouseButtonEventArgs e)
 	{
-		if (e.Button == MouseButton.Left)
-		{
-			_isMouseDown = true;
-			return true;
-		}
+		// if (e.Button == MouseButton.Left)
+		// {
+		// 	_isMouseDown = true;
+		// 	return true;
+		// }
+		if (_blobs.MouseDown(e)) return true;
 		return false;
 	}
 
@@ -277,56 +187,13 @@ class MainState : GameState
 	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool MouseUp(MouseButtonEventArgs e)
 	{
-		if (e.Button == MouseButton.Left)
-		{
-			_isMouseDown = false;
-			return true;
-		}
+		// if (e.Button == MouseButton.Left)
+		// {
+		// 	_isMouseDown = false;
+		// 	return true;
+		// }
+		if (_blobs.MouseUp(e)) return true;
 		return false;
-	}
-
-	private float Lerp(float x, float x0, float x1, float y0 = 0, float y1 = 1)
-	{
-		if (x0 == x1)
-		{
-			return 0.0f;
-		}
-		return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
-	}
-
-	private void ResetSamples()
-	{
-		_samples = new List<List<float?>>();
-
-		for (var y = 0; y < RC.Height; y += MetaballsConfig.GridResolution)
-		{
-			var row = new List<float?>();
-			for (var x = 0; x < RC.Width; x += MetaballsConfig.GridResolution)
-			{
-				row.Add(null);
-			}
-			_samples.Add(row);
-		}
-	}
-
-	private float? CalculateSample(int sx, int sy)
-	{
-		if (_samples[sy][sx] != null) return _samples[sy][sx];
-		var x = sx * MetaballsConfig.GridResolution;
-		var y = sy * MetaballsConfig.GridResolution;
-
-		var sample = 0f;
-		foreach (var b in _blobs)
-		{
-			sample += (float)Math.Pow(b.Radius, 2) / ((float)Math.Pow(x - b.Position.X, 2) + (float)Math.Pow(y - b.Position.Y, 2));
-		}
-		_samples[sy][sx] = sample;
-		return sample;
-	}
-
-	private void RenderLine(Vector2 from, Vector2 to)
-	{
-		RC.RenderLine(from, to, RadialColor.Green);
 	}
 
 	#endregion

@@ -44,7 +44,7 @@ class Program
 		rootCommand.AddOption(heightOption);
 
 		// Set handler for processing the command.
-		rootCommand.SetHandler(async (configFile, debug, fullscreen, width, height) =>
+		rootCommand.SetHandler(static async (configFile, debug, fullscreen, width, height) =>
 			{
 				await RunGameAsync(configFile, debug, fullscreen, width, height);
 			},
