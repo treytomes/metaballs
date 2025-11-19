@@ -51,9 +51,11 @@ class MainState : GameState
 	{
 		base.Load();
 
+		var factory = new BlobFactory(RC);
+
 		for (var n = 0; n < MetaballsConfig.NumBlobs; n++)
 		{
-			_blobs.Add(Blob.CreateRandom(RC));
+			_blobs.Add(factory.CreateRandomBlob());
 		}
 	}
 

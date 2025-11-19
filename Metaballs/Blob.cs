@@ -43,14 +43,6 @@ class Blob
 
 	#region Methods
 
-	public static Blob CreateRandom(IRenderingContext rc)
-	{
-		var r = (int)Math.Floor(Random.Shared.NextSingle() * (MetaballsConfig.MaxRadius - MetaballsConfig.MinRadius) + MetaballsConfig.MinRadius);
-		var x = (float)Math.Floor(Random.Shared.NextSingle() * (rc.Width - r * 2) + r);
-		var y = (float)Math.Floor(Random.Shared.NextSingle() * (rc.Height - r * 2) + r);
-		return new Blob(new Vector2(x, y), r);
-	}
-
 	public void Render(IRenderingContext rc)
 	{
 		if (Left < 0 || Right >= rc.Width)
