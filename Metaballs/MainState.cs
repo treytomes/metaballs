@@ -7,32 +7,24 @@ using OpenTK.Windowing.Common;
 
 using Keys = OpenTK.Windowing.GraphicsLibraryFramework.Keys;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
-using Metaballs.Particles;
 
 namespace Metaballs;
 
-/// <summary>
-/// Arrow keys and WASD can change the fire parameters.  Mouse wheel changes the pen size.  Left click to draw.
-/// Space bar to write text.
-/// 
-/// I had to slow the flame simulation way down in order for the drawing to be visible.
-/// It might look nicer to setup some kind of particle effect.
-/// </summary>
-/// <remarks>
-/// Metaballs demo from the algorithm described here: https://lodev.org/cgtutor/fire.html
-/// </remarks>
+// Metaballs / Marching Squares Demo
+// https://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/
+// https://jurasic.dev/marching_squares/
+
+// Based on my MiniScript code here: https://gist.github.com/treytomes/3f15d6e93b2448d05a1c1e5fc0125225
+
 class MainState : GameState
 {
 	#region Fields
 
-	private readonly FireBuffer _fire;
-
 	private bool _isMouseDown = false;
 	private Vector2 _mousePosition = Vector2.Zero;
-	private readonly ParticleFountain _drawingFountain;
 
-	private GlyphSet<Bitmap>? _tiles = null;
-	private ConsumableTileSet _consumables = new(new ParticleFountainFactory());
+	private List<List<float?>> _samples = new();
+	private List<Blob> _blobs = new();
 
 	#endregion
 
@@ -46,10 +38,6 @@ class MainState : GameState
 	public MainState(IResourceManager resources, IRenderingContext rc)
 		: base(resources, rc)
 	{
-		_fire = new(rc.Width, rc.Height, TimeSpan.FromMilliseconds(10));
-
-		var fountainFactory = new ParticleFountainFactory();
-		_drawingFountain = fountainFactory.CreateDrawingFountain();
 	}
 
 	#endregion
@@ -63,9 +51,10 @@ class MainState : GameState
 	{
 		base.Load();
 
-		var image = Resources.Load<Image>("oem437_8.png");
-		var bmp = new Bitmap(image);
-		_tiles = new GlyphSet<Bitmap>(bmp, 8, 8);
+		for (var n = 0; n < MetaballsConfig.NumBlobs; n++)
+		{
+			_blobs.Add(Blob.CreateRandom(RC));
+		}
 	}
 
 	/// <summary>
@@ -99,14 +88,118 @@ class MainState : GameState
 	public override void Render(GameTime gameTime)
 	{
 		RC.Clear();
-		_drawingFountain.Render(_fire);
-		_fire.Render(RC);
 
-		if (_tiles != null)
+		// Draw the grid.
+		if (MetaballsConfig.ShowGrid)
 		{
-			_consumables.Render(RC, _tiles, _fire);
+			for (var x = 0; x < RC.Width; x += MetaballsConfig.GridResolution)
+			{
+				RC.RenderLine(new Vector2(x, 0), new Vector2(x, RC.Height - 1), RadialColor.Gray);
+			}
+
+			for (var y = 0; y < RC.Height; y += MetaballsConfig.GridResolution)
+			{
+				RC.RenderLine(new Vector2(0, y), new Vector2(RC.Width - 1, y), RadialColor.Gray);
+			}
 		}
 
+
+		// Render the line cases.
+		for (var sy = 0; sy < _samples.Count - 2; sy++)
+		{
+			for (var sx = 0; sx < _samples[sy].Count - 2; sx++)
+			{
+				// if PRINT_SAMPLES then
+				// 	x = sx * GRID_RESOLUTION
+				// 	y = sy * GRID_RESOLUTION
+				// 	sample = calculateSample(x, y)
+				// 	sample = floor(sample * 100) / 100
+				// 	gfx.print sample, x -16, y - 16, color.silver, "small"
+				// end if
+
+				var bl = CalculateSample(sx, sy) ?? 0;
+				var br = CalculateSample(sx + 1, sy) ?? 0;
+				var tl = CalculateSample(sx, sy + 1) ?? 0;
+				var tr = CalculateSample(sx + 1, sy + 1) ?? 0;
+
+				Vector2 a, b, c, d;
+
+				if (MetaballsConfig.Interpolated)
+				{
+					a = new Vector2(
+						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, tl, tr),
+						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution
+					);
+					b = new Vector2(
+						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution,
+						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, br, tr)
+					);
+					c = new Vector2(
+						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, bl, br),
+						sy * MetaballsConfig.GridResolution
+					);
+					d = new Vector2(
+						sx * MetaballsConfig.GridResolution,
+						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, bl, tl)
+					);
+				}
+				else
+				{
+					a = new Vector2(
+						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2,
+						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution
+					);
+					b = new Vector2(
+						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution,
+						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2
+					);
+					c = new Vector2(
+						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2,
+						sy * MetaballsConfig.GridResolution
+					);
+					d = new Vector2(
+						sx * MetaballsConfig.GridResolution,
+						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2
+					);
+				}
+
+				bl = bl >= 1 ? 1 : 0;
+				br = br >= 1 ? 1 : 0;
+				tl = tl >= 1 ? 1 : 0;
+				tr = tr >= 1 ? 1 : 0;
+				var blobCase = bl + br * 2 + tr * 4 + tl * 8;
+
+				if (blobCase == 0 || blobCase == 15)
+					continue;
+				else if (blobCase == 1 || blobCase == 14)
+					RenderLine(d, c);
+				else if (blobCase == 2 || blobCase == 13)
+					RenderLine(b, c);
+				else if (blobCase == 3 || blobCase == 12)
+					RenderLine(d, b);
+				else if (blobCase == 4 || blobCase == 11)
+					RenderLine(a, b);
+				else if (blobCase == 5)
+				{
+					RenderLine(d, a);
+					RenderLine(c, b);
+				}
+				else if (blobCase == 6 || blobCase == 9)
+					RenderLine(c, a);
+				else if (blobCase == 7 || blobCase == 8)
+					RenderLine(d, a);
+				else if (blobCase == 10)
+				{
+					RenderLine(a, b);
+					RenderLine(c, d);
+				}
+			}
+		}
+
+		foreach (var blob in _blobs)
+		{
+			blob.Render(RC);
+		}
 
 		base.Render(gameTime);
 	}
@@ -117,13 +210,13 @@ class MainState : GameState
 	/// <param name="gameTime">Timing values for the current frame.</param>
 	public override void Update(GameTime gameTime)
 	{
-		_drawingFountain.Update(gameTime);
-		_fire.Update(gameTime);
-		if (_tiles != null)
-		{
-			_consumables.Update(gameTime, _tiles);
-		}
 		base.Update(gameTime);
+		ResetSamples();
+
+		foreach (var blob in _blobs)
+		{
+			blob.Update(gameTime);
+		}
 	}
 
 	/// <summary>
@@ -136,52 +229,13 @@ class MainState : GameState
 		return base.KeyDown(e);
 	}
 
-	/// <summary>
-	/// Handles key up events.
-	/// </summary>
-	/// <param name="e">Key event arguments.</param>
-	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool KeyUp(KeyboardKeyEventArgs e)
 	{
-		// Note: You can get some neat affects by modifying the breadth/depth followed by the smoothing scale.
-		// The smoother scale has less of an effect as the other numbers increase.
-		// The banding effect is interesting.
-
-		var delta = e.Key.GetAxis(Keys.A, Keys.D);
-		if (delta != 0)
-		{
-			_fire.SmoothingScale += delta * 0.001f;
-			Console.WriteLine($"_fire.SmoothingScale: {_fire.SmoothingScale}");
-		}
-		delta = e.Key.GetAxis(Keys.Left, Keys.Right);
-		if (delta != 0)
-		{
-			_fire.Breadth += (int)delta;
-			Console.WriteLine($"_fire.Breadth: {_fire.Breadth}");
-		}
-		delta = e.Key.GetAxis(Keys.Down, Keys.Up);
-		if (delta != 0)
-		{
-			_fire.Depth += (int)delta;
-			Console.WriteLine($"_fire.Depth: {_fire.Depth}");
-		}
-
-		switch (e.Key)
-		{
-			case Keys.Space:
-				_consumables.WriteString("Hello, world! :-D", new Vector2(100, 100), RadialColor.White, TimeSpan.FromMilliseconds(100));
-				break;
-		}
 		return base.KeyUp(e);
 	}
 
 	public override bool MouseWheel(MouseWheelEventArgs e)
 	{
-		_drawingFountain.Scale += (int)e.OffsetY;
-		if (_drawingFountain.Scale < 1)
-		{
-			_drawingFountain.Scale = 1;
-		}
 		return base.MouseWheel(e);
 	}
 
@@ -195,7 +249,6 @@ class MainState : GameState
 		_mousePosition = e.Position;
 		if (_isMouseDown)
 		{
-			_drawingFountain.MoveTo(_mousePosition);
 		}
 		return base.MouseMove(e);
 	}
@@ -210,8 +263,6 @@ class MainState : GameState
 		if (e.Button == MouseButton.Left)
 		{
 			_isMouseDown = true;
-			_drawingFountain.MoveTo(_mousePosition);
-			_drawingFountain.IsActive = true;
 			return true;
 		}
 		return false;
@@ -227,10 +278,53 @@ class MainState : GameState
 		if (e.Button == MouseButton.Left)
 		{
 			_isMouseDown = false;
-			_drawingFountain.IsActive = false;
 			return true;
 		}
 		return false;
+	}
+
+	private float Lerp(float x, float x0, float x1, float y0 = 0, float y1 = 1)
+	{
+		if (x0 == x1)
+		{
+			return 0.0f;
+		}
+		return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+	}
+
+	private void ResetSamples()
+	{
+		_samples = new List<List<float?>>();
+
+		for (var y = 0; y < RC.Height; y += MetaballsConfig.GridResolution)
+		{
+			var row = new List<float?>();
+			for (var x = 0; x < RC.Width; x += MetaballsConfig.GridResolution)
+			{
+				row.Add(null);
+			}
+			_samples.Add(row);
+		}
+	}
+
+	private float? CalculateSample(int sx, int sy)
+	{
+		if (_samples[sy][sx] != null) return _samples[sy][sx];
+		var x = sx * MetaballsConfig.GridResolution;
+		var y = sy * MetaballsConfig.GridResolution;
+
+		var sample = 0f;
+		foreach (var b in _blobs)
+		{
+			sample += (float)Math.Pow(b.Radius, 2) / ((float)Math.Pow(x - b.Position.X, 2) + (float)Math.Pow(y - b.Position.Y, 2));
+		}
+		_samples[sy][sx] = sample;
+		return sample;
+	}
+
+	private void RenderLine(Vector2 from, Vector2 to)
+	{
+		RC.RenderLine(from, to, RadialColor.Green);
 	}
 
 	#endregion
