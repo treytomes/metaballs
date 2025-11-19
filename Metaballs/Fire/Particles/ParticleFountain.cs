@@ -1,7 +1,7 @@
 using OpenTK.Mathematics;
 using RetroTK;
 
-namespace Metaballs.Particles;
+namespace Metaballs.Fire.Particles;
 
 class ParticleFountain
 {

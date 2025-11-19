@@ -1,7 +1,7 @@
-using Metaballs.Brushes;
+using Metaballs.Fire.Brushes;
 using OpenTK.Mathematics;
 
-namespace Metaballs.Particles;
+namespace Metaballs.Fire.Particles;
 
 // Note: We could serialize this and use it to spawn different fountain types.
 class ParticleFountainProps

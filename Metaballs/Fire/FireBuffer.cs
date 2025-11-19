@@ -1,4 +1,4 @@
-using Metaballs.Colors;
+using Metaballs.Fire.Colors;
 using OpenTK.Mathematics;
 using RetroTK;
 using RetroTK.Gfx;

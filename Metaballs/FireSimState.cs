@@ -7,7 +7,8 @@ using OpenTK.Windowing.Common;
 
 using Keys = OpenTK.Windowing.GraphicsLibraryFramework.Keys;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
-using Metaballs.Particles;
+using Metaballs.Fire.Particles;
+using Metaballs.Fire;
 
 namespace Metaballs;
 

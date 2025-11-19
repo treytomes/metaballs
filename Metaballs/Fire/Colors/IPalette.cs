@@ -1,6 +1,6 @@
 using RetroTK.Gfx;
 
-namespace Metaballs.Colors;
+namespace Metaballs.Fire.Colors;
 
 interface IPalette
 {

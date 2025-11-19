@@ -1,9 +1,9 @@
-using Metaballs.Particles;
+using Metaballs.Fire.Particles;
 using OpenTK.Mathematics;
 using RetroTK;
 using RetroTK.Gfx;
 
-namespace Metaballs;
+namespace Metaballs.Fire;
 
 class ConsumableTileSet
 {

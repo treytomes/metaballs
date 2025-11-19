@@ -1,9 +1,8 @@
-using Metaballs;
-using Metaballs.Brushes;
+using Metaballs.Fire.Brushes;
 using OpenTK.Mathematics;
 using RetroTK;
 
-namespace Metaballs.Particles;
+namespace Metaballs.Fire.Particles;
 
 
 // Note: Class, not struct.  Otherwise the references won't update like they should.

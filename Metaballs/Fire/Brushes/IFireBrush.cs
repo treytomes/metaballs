@@ -1,4 +1,4 @@
-namespace Metaballs.Brushes;
+namespace Metaballs.Fire.Brushes;
 
 interface IFireBrush
 {
