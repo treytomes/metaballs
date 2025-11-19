@@ -83,5 +83,10 @@ class Blob
 		Position += delta;
 	}
 
+	public void MoveTo(Vector2 position)
+	{
+		Position = position;
+	}
+
 	#endregion
 }

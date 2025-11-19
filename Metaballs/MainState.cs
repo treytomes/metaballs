@@ -23,6 +23,7 @@ class MainState : GameState
 	private bool _isMouseDown = false;
 	private Vector2 _mousePosition = Vector2.Zero;
 
+	private BlobFactory? _blobFactory = null;
 	private EventBlobCollection _blobs = new();
 
 	#endregion
@@ -50,11 +51,11 @@ class MainState : GameState
 	{
 		base.Load();
 
-		var factory = new BlobFactory(RC);
+		_blobFactory = new BlobFactory(RC);
 
 		for (var n = 0; n < MetaballsConfig.NumBlobs; n++)
 		{
-			_blobs.Add(new EventBlob(factory.CreateRandomBlob()));
+			_blobs.Add(new EventBlob(_blobFactory.CreateRandomBlob()));
 		}
 	}
 
@@ -151,15 +152,9 @@ class MainState : GameState
 	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool MouseMove(MouseMoveEventArgs e)
 	{
-		// _mousePosition = e.Position;
-		// if (_isMouseDown)
-		// {
-		// }
+		_mousePosition = e.Position;
 
-		if (_blobs.MouseMove(e))
-		{
-			return true;
-		}
+		if (_blobs.MouseMove(e)) return true;
 
 		return base.MouseMove(e);
 	}
@@ -171,12 +166,17 @@ class MainState : GameState
 	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool MouseDown(MouseButtonEventArgs e)
 	{
-		// if (e.Button == MouseButton.Left)
-		// {
-		// 	_isMouseDown = true;
-		// 	return true;
-		// }
 		if (_blobs.MouseDown(e)) return true;
+
+		if (e.Button == MouseButton.Left)
+		{
+			if (_blobFactory == null) return false;
+			var blob = _blobFactory.CreateRandomBlob();
+			blob.MoveTo(_mousePosition);
+			_blobs.Add(new EventBlob(blob));
+			return true;
+		}
+
 		return false;
 	}
 
