@@ -24,7 +24,7 @@ class MainState : GameState
 	private bool _isMouseDown = false;
 	private Vector2 _mousePosition = Vector2.Zero;
 
-	private BlobFactory? _blobFactory = null;
+	private BlobFactory _blobFactory;
 	private EventBlobCollection _blobs;
 
 	#endregion
@@ -40,7 +40,8 @@ class MainState : GameState
 		: base(resources, rc)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		_blobs = new EventBlobCollection(_settings.Metaballs);
+		_blobFactory = new BlobFactory(_settings.Metaballs, rc);
+		_blobs = new EventBlobCollection(_settings.Metaballs, rc.Width, rc.Height);
 	}
 
 	#endregion
@@ -53,8 +54,6 @@ class MainState : GameState
 	public override void Load()
 	{
 		base.Load();
-
-		_blobFactory = new BlobFactory(_settings.Metaballs, RC);
 
 		for (var n = 0; n < _settings.Metaballs.NumBlobs; n++)
 		{

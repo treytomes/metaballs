@@ -24,6 +24,8 @@ class BlobCollection<TBlob>
 	#region Fields
 
 	private readonly MetaballsSettings _settings;
+	private readonly int _width;
+	private readonly int _height;
 	protected readonly List<TBlob> _blobs;
 	private List<List<float?>> _samples = new();
 
@@ -31,9 +33,11 @@ class BlobCollection<TBlob>
 
 	#region Constructors
 
-	public BlobCollection(MetaballsSettings settings, IEnumerable<TBlob>? blobs = null)
+	public BlobCollection(MetaballsSettings settings, int width, int height, IEnumerable<TBlob>? blobs = null)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
+		_width = width;
+		_height = height;
 		_blobs = [.. blobs ?? Enumerable.Empty<TBlob>()];
 	}
 
@@ -77,7 +81,7 @@ class BlobCollection<TBlob>
 
 	public void Render(IRenderingContext rc)
 	{
-		ResetSamples(rc);
+		ResetSamples();
 
 		// Note: We're using Parallel to increase performance at the cost of the CPU.  Try not to start a fire!
 
@@ -96,8 +100,8 @@ class BlobCollection<TBlob>
 	private void RenderBayerField(IRenderingContext rc)
 	{
 		// Note: I figured out the inverse Bayer matrix trick while trying to figure out how to render a heat field.
-		Parallel.For(0, rc.Height, y =>
-			Parallel.For(0, rc.Width, x =>
+		Parallel.For(0, _height, y =>
+			Parallel.For(0, _width, x =>
 			{
 				var pos = new Vector2(x, y);
 
@@ -273,14 +277,14 @@ class BlobCollection<TBlob>
 		return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
 	}
 
-	private void ResetSamples(IRenderingContext rc)
+	private void ResetSamples()
 	{
 		_samples = new List<List<float?>>();
 
-		for (var y = 0; y < rc.Height; y += GridResolution)
+		for (var y = 0; y < _height; y += GridResolution)
 		{
 			var row = new List<float?>();
-			for (var x = 0; x < rc.Width; x += GridResolution)
+			for (var x = 0; x < _width; x += GridResolution)
 			{
 				row.Add(null);
 			}
