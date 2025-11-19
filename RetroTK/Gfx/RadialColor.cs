@@ -43,6 +43,7 @@ public readonly struct RadialColor : IEquatable<RadialColor>
 	public static RadialColor Red => new RadialColor(5, 0, 0);
 	public static RadialColor Green => new RadialColor(0, 5, 0);
 	public static RadialColor Blue => new RadialColor(0, 0, 5);
+	public static RadialColor Yellow => new RadialColor(5, 5, 0);
 
 	/// <summary>
 	/// Calculate the palette index for this color.
