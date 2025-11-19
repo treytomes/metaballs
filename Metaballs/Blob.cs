@@ -25,6 +25,7 @@ class Blob
 
 	public virtual bool IsActive { get; } = true;
 
+	public bool DrawCircles { get; init; }
 	public Vector2 Position { get; private set; }
 	public int Radius { get; private set; }
 	public virtual RadialColor Color { get; } = RadialColor.Red;
@@ -51,7 +52,7 @@ class Blob
 		{
 			Velocity = new Vector2(Velocity.X, -Velocity.Y);
 		}
-		if (MetaballsConfig.DrawCircles)
+		if (DrawCircles)
 		{
 			rc.RenderCircle(Position, Radius, Color);
 		}

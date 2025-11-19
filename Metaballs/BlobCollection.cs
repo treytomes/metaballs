@@ -9,6 +9,7 @@ class BlobCollection<TBlob>
 {
 	#region Fields
 
+	private readonly MetaballsSettings _settings;
 	protected readonly List<TBlob> _blobs;
 	private List<List<float?>> _samples = new();
 
@@ -16,10 +17,18 @@ class BlobCollection<TBlob>
 
 	#region Constructors
 
-	public BlobCollection(IEnumerable<TBlob>? blobs = null)
+	public BlobCollection(MetaballsSettings settings, IEnumerable<TBlob>? blobs = null)
 	{
+		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_blobs = new(blobs ?? Enumerable.Empty<TBlob>());
 	}
+
+	#endregion
+
+	#region Properties
+
+	private bool Interpolated => _settings.Interpolated;
+	private int GridResolution => _settings.GridResolution;
 
 	#endregion
 
@@ -72,42 +81,42 @@ class BlobCollection<TBlob>
 
 				Vector2 a, b, c, d;
 
-				if (MetaballsConfig.Interpolated)
+				if (Interpolated)
 				{
 					a = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, tl, tr),
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution
+						sx * GridResolution + GridResolution * Lerp(1, tl, tr),
+						sy * GridResolution + GridResolution
 					);
 					b = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, br, tr)
+						sx * GridResolution + GridResolution,
+						sy * GridResolution + GridResolution * Lerp(1, br, tr)
 					);
 					c = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, bl, br),
-						sy * MetaballsConfig.GridResolution
+						sx * GridResolution + GridResolution * Lerp(1, bl, br),
+						sy * GridResolution
 					);
 					d = new Vector2(
-						sx * MetaballsConfig.GridResolution,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution * Lerp(1, bl, tl)
+						sx * GridResolution,
+						sy * GridResolution + GridResolution * Lerp(1, bl, tl)
 					);
 				}
 				else
 				{
 					a = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution
+						sx * GridResolution + GridResolution / 2,
+						sy * GridResolution + GridResolution
 					);
 					b = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2
+						sx * GridResolution + GridResolution,
+						sy * GridResolution + GridResolution / 2
 					);
 					c = new Vector2(
-						sx * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2,
-						sy * MetaballsConfig.GridResolution
+						sx * GridResolution + GridResolution / 2,
+						sy * GridResolution
 					);
 					d = new Vector2(
-						sx * MetaballsConfig.GridResolution,
-						sy * MetaballsConfig.GridResolution + MetaballsConfig.GridResolution / 2
+						sx * GridResolution,
+						sy * GridResolution + GridResolution / 2
 					);
 				}
 
@@ -175,10 +184,10 @@ class BlobCollection<TBlob>
 	{
 		_samples = new List<List<float?>>();
 
-		for (var y = 0; y < rc.Height; y += MetaballsConfig.GridResolution)
+		for (var y = 0; y < rc.Height; y += GridResolution)
 		{
 			var row = new List<float?>();
-			for (var x = 0; x < rc.Width; x += MetaballsConfig.GridResolution)
+			for (var x = 0; x < rc.Width; x += GridResolution)
 			{
 				row.Add(null);
 			}
@@ -189,8 +198,8 @@ class BlobCollection<TBlob>
 	private float? CalculateSample(int sx, int sy)
 	{
 		if (_samples[sy][sx] != null) return _samples[sy][sx];
-		var x = sx * MetaballsConfig.GridResolution;
-		var y = sy * MetaballsConfig.GridResolution;
+		var x = sx * GridResolution;
+		var y = sy * GridResolution;
 
 		var sample = 0f;
 		foreach (var b in _blobs)

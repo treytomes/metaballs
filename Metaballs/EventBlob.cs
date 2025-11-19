@@ -15,6 +15,7 @@ class EventBlob : Blob
 	public EventBlob(Blob blob)
 		: this(blob.Position, blob.Radius)
 	{
+		DrawCircles = blob.DrawCircles;
 	}
 
 	#endregion

@@ -15,8 +15,8 @@ class EventBlobCollection : BlobCollection<EventBlob>
 
 	#region Constructors
 
-	public EventBlobCollection(IEnumerable<EventBlob>? blobs = null)
-		: base(blobs ?? Enumerable.Empty<EventBlob>())
+	public EventBlobCollection(MetaballsSettings settings, IEnumerable<EventBlob>? blobs = null)
+		: base(settings, blobs ?? Enumerable.Empty<EventBlob>())
 	{
 	}
 

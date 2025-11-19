@@ -20,11 +20,12 @@ class MainState : GameState
 {
 	#region Fields
 
+	private readonly MetaballsAppSettings _settings;
 	private bool _isMouseDown = false;
 	private Vector2 _mousePosition = Vector2.Zero;
 
 	private BlobFactory? _blobFactory = null;
-	private EventBlobCollection _blobs = new();
+	private EventBlobCollection _blobs;
 
 	#endregion
 
@@ -35,9 +36,11 @@ class MainState : GameState
 	/// </summary>
 	/// <param name="resources">Resource manager for loading assets.</param>
 	/// <param name="rc">Rendering context for drawing.</param>
-	public MainState(IResourceManager resources, IRenderingContext rc)
+	public MainState(MetaballsAppSettings settings, IResourceManager resources, IRenderingContext rc)
 		: base(resources, rc)
 	{
+		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
+		_blobs = new EventBlobCollection(_settings.Metaballs);
 	}
 
 	#endregion
@@ -51,9 +54,9 @@ class MainState : GameState
 	{
 		base.Load();
 
-		_blobFactory = new BlobFactory(RC);
+		_blobFactory = new BlobFactory(_settings.Metaballs, RC);
 
-		for (var n = 0; n < MetaballsConfig.NumBlobs; n++)
+		for (var n = 0; n < _settings.Metaballs.NumBlobs; n++)
 		{
 			_blobs.Add(new EventBlob(_blobFactory.CreateRandomBlob()));
 		}
@@ -92,14 +95,14 @@ class MainState : GameState
 		RC.Clear();
 
 		// Draw the grid.
-		if (MetaballsConfig.ShowGrid)
+		if (_settings.Metaballs.ShowGrid)
 		{
-			for (var x = 0; x < RC.Width; x += MetaballsConfig.GridResolution)
+			for (var x = 0; x < RC.Width; x += _settings.Metaballs.GridResolution)
 			{
 				RC.RenderLine(new Vector2(x, 0), new Vector2(x, RC.Height - 1), RadialColor.Gray);
 			}
 
-			for (var y = 0; y < RC.Height; y += MetaballsConfig.GridResolution)
+			for (var y = 0; y < RC.Height; y += _settings.Metaballs.GridResolution)
 			{
 				RC.RenderLine(new Vector2(0, y), new Vector2(RC.Width - 1, y), RadialColor.Gray);
 			}

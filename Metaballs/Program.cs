@@ -3,8 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RetroTK;
 using RetroTK.Services;
+using RetroTK.States;
 using System.CommandLine;
 
 namespace Metaballs;
@@ -118,15 +120,24 @@ class Program
 					logging.SetMinimumLevel(LogLevel.Information);
 				}
 			})
-			.ConfigureServices((hostContext, services) =>
-			{
-				// Register configuration.
-				services.Configure<AppSettings>(hostContext.Configuration);
-
-				services.AddRetroTK();
-
-				// Register game states.
-				services.AddTransient<MainState>();
-			});
+			.ConfigureServices(ConfigureServices<MetaballsAppSettings, MainState>);
 	}
+
+	private static void ConfigureServices<TAppSettings, TMainState>(HostBuilderContext hostContext, IServiceCollection services)
+		where TAppSettings : AppSettings
+		where TMainState : GameState
+	{
+		// Register configuration.
+		services.Configure<TAppSettings>(hostContext.Configuration);
+
+		services.AddSingleton(sp => sp.GetRequiredService<IOptions<TAppSettings>>().Value);
+		services.AddSingleton<AppSettings>(sp => sp.GetRequiredService<TAppSettings>());
+		services.AddSingleton<IOptions<AppSettings>>(sp => sp.GetRequiredService<IOptions<TAppSettings>>());
+
+		services.AddRetroTK();
+
+		// Register game states.
+		services.AddTransient<TMainState>();
+	}
+
 }
