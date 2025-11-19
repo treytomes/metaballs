@@ -34,26 +34,19 @@ class BlobCollection<TBlob>
 	public BlobCollection(MetaballsSettings settings, IEnumerable<TBlob>? blobs = null)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		_blobs = new(blobs ?? Enumerable.Empty<TBlob>());
+		_blobs = [.. blobs ?? Enumerable.Empty<TBlob>()];
 	}
 
 	#endregion
 
 	#region Properties
 
-	public RadialColor OutlineColor { get; set; } = RadialColor.Green;
+	public RadialColor OutlineColor { get; set; } = new RadialColor(0, 1, 0);
+	public RadialColor PrimaryColor { get; set; } = new RadialColor(0, 5, 0);
+	public RadialColor SecondaryColor { get; set; } = new RadialColor(0, 2, 0);
+
 	private bool Interpolated => _settings.Interpolated;
 	private int GridResolution => _settings.GridResolution;
-
-	private readonly List<RadialColor> COLORS = [
-			new RadialColor(0, 0, 0),
-			new RadialColor(1, 0, 0),
-			new RadialColor(2, 1, 0),
-			new RadialColor(3, 2, 1),
-			new RadialColor(4, 3, 2),
-			new RadialColor(5, 4, 3)
-	];
-
 
 	#endregion
 
@@ -196,67 +189,42 @@ class BlobCollection<TBlob>
 		});
 
 		// Note: I figured out the inverse Bayer matrix trick while trying to figure out how to render a heat field.
-		// It's not quite the effect I'm looking for here though.
 		for (var y = 0; y < rc.Height; y++)
 		{
 			for (var x = 0; x < rc.Width; x++)
 			{
 				var pos = new Vector2(x, y);
 
-				var intensity = _samples[y][x] ?? 0f; // CalculateTemperatureAtPoint(pos) / 100.0f;
+				// Calculate dithering base value.
+				var intensity = _samples[y][x] ?? 0f;
 
-				// Calculate dithering probability.
+				// Don't fill areas outside the blob range.
+				if (intensity < 1.0f) continue;
+
+				// This will discount sample values that fall outside our range.
+				intensity -= 1f;
+
 				intensity = RetroTK.MathHelper.Clamp(intensity, 0.0f, 1.0f);
+				intensity = (float)Math.Sin(intensity);
 
 				// Get the appropriate threshold from the Bayer matrix (0-15, normalized to 0.0-1.0)
 				var bayerX = RetroTK.MathHelper.Modulus(Math.Abs((int)pos.X), 4);
 				var bayerY = RetroTK.MathHelper.Modulus(Math.Abs((int)pos.Y), 4);
 				var threshold = BAYER_MATRIX[bayerY, bayerX] / 16.0f;
-				var colorIndex = IntensityToColorIndex(intensity);
+				var color = SecondaryColor.Lerp(PrimaryColor, intensity);
 				if (intensity >= threshold)
 				{
-					var color = COLORS[colorIndex];
-					if (color.Index != 0)
-					{
-						rc.SetPixel(pos, color);
-					}
+					rc.SetPixel(pos, color);
 				}
 				else
 				{
-					colorIndex -= 1;
-					if (colorIndex > 0)
-					{
-						var color = COLORS[colorIndex];
-						if (color.Index != 0)
-						{
-							rc.SetPixel(pos, color);
-						}
-					}
+					// The fill color for anything below the dithering threshold.
+					rc.SetPixel(pos, SecondaryColor.Lerp(PrimaryColor, intensity * 0.5f));
 				}
 			}
 		}
 
-		Console.WriteLine("Sample: " + (_samples[(int)_blobs[0].Position.Y][(int)_blobs[0].Position.X] ?? 9999));
-
 		Parallel.ForEach(_blobs, b => b.Render(rc));
-	}
-
-	/// <summary>
-	/// </summary>
-	/// <param name="intensity">A value in [0, 1].</param>
-	/// <returns></returns>
-	private int IntensityToColorIndex(float intensity)
-	{
-		return (int)(intensity * 5.0f);
-	}
-
-	/// <summary>
-	/// </summary>
-	/// <param name="intensity">A value in [0, 1].</param>
-	/// <returns></returns>
-	private RadialColor IntensityToColor(float intensity)
-	{
-		return COLORS[IntensityToColorIndex(intensity)];
 	}
 
 	private static void RenderSegment(IRenderingContext rc, Vector2 from, Vector2 to, RadialColor color)
