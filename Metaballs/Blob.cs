@@ -8,15 +8,11 @@ class Blob
 {
 	#region Constructors
 
-	public Blob(Vector2 position, int radius)
+	public Blob(Vector2 position, int radius, Vector2? velocity = null)
 	{
 		Position = position;
 		Radius = radius;
-
-		Velocity = new Vector2(
-			(Random.Shared.NextSingle() * 3 - 2) * Random.Shared.NextSingle() * 8 + 8,
-			(Random.Shared.NextSingle() * 3 - 2) * Random.Shared.NextSingle() * 8 + 8
-		);
+		Velocity = velocity ?? Vector2.Zero;
 	}
 
 	#endregion
@@ -29,7 +25,7 @@ class Blob
 	public Vector2 Position { get; private set; }
 	public int Radius { get; private set; }
 	public virtual RadialColor Color { get; } = RadialColor.Red;
-	public Vector2 Velocity { get; private set; }
+	public Vector2 Velocity { get; set; } = Vector2.Zero;
 
 	public float Left => Position.X - Radius;
 	public float Right => Position.X + Radius;

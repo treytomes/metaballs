@@ -13,7 +13,15 @@ class BlobFactory(MetaballsSettings settings, IRenderingContext rc)
 		var r = (int)Math.Floor(Random.Shared.NextSingle() * (settings.MaxRadius - settings.MinRadius) + settings.MinRadius);
 		var x = (float)Math.Floor(Random.Shared.NextSingle() * (_displayWidth - r * 2) + r);
 		var y = (float)Math.Floor(Random.Shared.NextSingle() * (_displayHeight - r * 2) + r);
-		var blob = new Blob(new Vector2(x, y), r)
+
+		var v = settings.InitialDrift
+			? new Vector2(
+				(Random.Shared.NextSingle() * 3 - 2) * Random.Shared.NextSingle() * 8 + 8,
+				(Random.Shared.NextSingle() * 3 - 2) * Random.Shared.NextSingle() * 8 + 8
+			)
+			: Vector2.Zero;
+
+		var blob = new Blob(new Vector2(x, y), r, v)
 		{
 			DrawCircles = settings.DrawCircles,
 		};
