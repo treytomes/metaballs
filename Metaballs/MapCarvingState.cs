@@ -24,7 +24,7 @@ namespace Metaballs;
 /// <summary>
 /// Left click to draw, right click to erase, mouse wheel to control the size of the brush.
 /// </summary>
-class MainState : GameState
+class MapCarvingState : GameState
 {
 	#region Fields
 
@@ -45,7 +45,7 @@ class MainState : GameState
 	/// </summary>
 	/// <param name="resources">Resource manager for loading assets.</param>
 	/// <param name="rc">Rendering context for drawing.</param>
-	public MainState(MetaballsAppSettings settings, IResourceManager resources, IRenderingContext rc)
+	public MapCarvingState(MetaballsAppSettings settings, IResourceManager resources, IRenderingContext rc)
 		: base(resources, rc)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
