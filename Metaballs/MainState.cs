@@ -7,6 +7,7 @@ using OpenTK.Windowing.Common;
 
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using Metaballs.Brushes;
+using System.Drawing;
 
 namespace Metaballs;
 
@@ -30,6 +31,7 @@ class MainState : GameState
 	private readonly MetaballsAppSettings _settings;
 	private Vector2 _mousePosition = Vector2.Zero;
 
+	private Grid _grid;
 	private CircleCarvingBrush _brush = new CircleCarvingBrush();
 	private SampleMap _samples;
 	private bool _isDrawing = false;
@@ -48,6 +50,7 @@ class MainState : GameState
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_samples = new(_settings.Metaballs, rc.Width, rc.Height);
+		_grid = new(8, RadialColor.Gray, new Rectangle(0, 0, rc.Width, rc.Height));
 	}
 
 	#endregion
@@ -94,26 +97,12 @@ class MainState : GameState
 	{
 		RC.Clear();
 
-		RenderGrid();
-
+		_grid.Render(RC);
 		_brush.Render(RC, _mousePosition);
 
 		_samples.Render(RC);
 
 		base.Render(gameTime);
-	}
-
-	private void RenderGrid()
-	{
-		var gridResolution = 8;
-		for (var x = 0; x < RC.Width; x += gridResolution)
-		{
-			RC.RenderLine(new Vector2(x, 0), new Vector2(x, RC.Height - 1), RadialColor.Gray);
-		}
-		for (var y = 0; y < RC.Height; y += gridResolution)
-		{
-			RC.RenderLine(new Vector2(0, y), new Vector2(RC.Width - 1, y), RadialColor.Gray);
-		}
 	}
 
 	/// <summary>
