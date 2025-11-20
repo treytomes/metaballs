@@ -5,8 +5,8 @@ using RetroTK.States;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
-using Keys = OpenTK.Windowing.GraphicsLibraryFramework.Keys;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
+using Metaballs.Brushes;
 
 namespace Metaballs;
 
@@ -18,22 +18,21 @@ namespace Metaballs;
 
 // Note: It has occurred to me that if I am editing the metaball sample field
 
+// Note: Drawing with the carving brush is surprisingly satisfying.
+
+/// <summary>
+/// Left click to draw, right click to erase, mouse wheel to control the size of the brush.
+/// </summary>
 class MainState : GameState
 {
-	#region Constants
-
-	private const int CARVING_RADIUS = 8;
-	private const float CARVING_FACTOR = 0.1f;
-
-	#endregion
-
 	#region Fields
 
 	private readonly MetaballsAppSettings _settings;
 	private Vector2 _mousePosition = Vector2.Zero;
 
+	private CircleCarvingBrush _brush = new CircleCarvingBrush();
 	private SampleMap _samples;
-	private float _drawingDelta = 0;
+	private bool _isDrawing = false;
 
 	#endregion
 
@@ -48,17 +47,8 @@ class MainState : GameState
 		: base(resources, rc)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		_samples = new(rc.Width, rc.Height);
+		_samples = new(_settings.Metaballs, rc.Width, rc.Height);
 	}
-
-	#endregion
-
-	#region Properties
-
-	private bool Interpolated => _settings.Metaballs.Interpolated;
-	private float GridResolution => _settings.Metaballs.GridResolution;
-	private RadialColor OutlineColor { get; } = RadialColor.Yellow;
-	private int CarvingRadius { get; set; } = CARVING_RADIUS;
 
 	#endregion
 
@@ -115,9 +105,9 @@ class MainState : GameState
 			RC.RenderLine(new Vector2(0, y), new Vector2(RC.Width - 1, y), RadialColor.Gray);
 		}
 
-		RC.RenderCircle(_mousePosition, CarvingRadius, RadialColor.Red);
+		_brush.Render(RC, _mousePosition);
 
-		RenderOutline(RC);
+		_samples.Render(RC);
 
 		base.Render(gameTime);
 	}
@@ -128,40 +118,17 @@ class MainState : GameState
 	/// <param name="gameTime">Timing values for the current frame.</param>
 	public override void Update(GameTime gameTime)
 	{
-		if (_drawingDelta != 0)
+		if (_isDrawing)
 		{
-			CarveChunk(_mousePosition, _drawingDelta * CARVING_FACTOR, CarvingRadius);
+			_brush.Carve(_samples, _mousePosition);
 		}
 		base.Update(gameTime);
 	}
 
 	public override bool MouseWheel(MouseWheelEventArgs e)
 	{
-		CarvingRadius += Math.Sign(e.OffsetY);
-		if (CarvingRadius < 1) CarvingRadius = 1;
-
-		// CarveChunk(_mousePosition, Math.Sign(e.OffsetY) * CARVING_FACTOR);
-
+		_brush.Radius += Math.Sign(e.OffsetY);
 		return base.MouseWheel(e);
-	}
-
-	private void CarveChunk(Vector2 position, float delta, int radius)
-	{
-		for (var dy = -radius; dy <= radius; dy++)
-		{
-			for (var dx = -radius; dx <= radius; dx++)
-			{
-				var dist = (float)Math.Sqrt(dy * dy + dx * dx);
-				if (dist > radius) continue;
-
-				var sampleFactor = delta * (radius - dist);
-				var x = dx + (int)position.X;
-				var y = dy + (int)position.Y;
-				var newSample = _samples[y, x] + sampleFactor;
-				if (newSample < 0) newSample = 0;
-				_samples[y, x] = newSample;
-			}
-		}
 	}
 
 	/// <summary>
@@ -173,12 +140,14 @@ class MainState : GameState
 	{
 		if (e.Button == MouseButton.Left)
 		{
-			_drawingDelta = 1;
+			_isDrawing = true;
+			_brush.Intensity = Math.Abs(_brush.Intensity);
 			return true;
 		}
 		else if (e.Button == MouseButton.Right)
 		{
-			_drawingDelta = -1;
+			_isDrawing = true;
+			_brush.Intensity = -Math.Abs(_brush.Intensity);
 			return true;
 		}
 		return false;
@@ -193,12 +162,12 @@ class MainState : GameState
 	{
 		if (e.Button == MouseButton.Left)
 		{
-			_drawingDelta = 0;
+			_isDrawing = false;
 			return true;
 		}
 		else if (e.Button == MouseButton.Right)
 		{
-			_drawingDelta = 0;
+			_isDrawing = false;
 			return true;
 		}
 		return false;
@@ -213,167 +182,6 @@ class MainState : GameState
 	{
 		_mousePosition = e.Position;
 		return base.MouseMove(e);
-	}
-
-	// /// <summary>
-	// /// Handles mouse down events.
-	// /// </summary>
-	// /// <param name="e">Mouse button event arguments.</param>
-	// /// <returns>True if the event was handled; otherwise, false.</returns>
-	// public override bool MouseDown(MouseButtonEventArgs e)
-	// {
-	// 	if (e.Button == MouseButton.Left)
-	// 	{
-	// 		// Increase sample field value.
-	// 		return true;
-	// 	}
-	// 	else if (e.Button == MouseButton.Right)
-	// 	{
-	// 		// Decrease sample field value.
-	// 	}
-
-	// 	return false;
-	// }
-
-	// /// <summary>
-	// /// Handles mouse up events.
-	// /// </summary>
-	// /// <param name="e">Mouse button event arguments.</param>
-	// /// <returns>True if the event was handled; otherwise, false.</returns>
-	// public override bool MouseUp(MouseButtonEventArgs e)
-	// {
-	// 	if (e.Button == MouseButton.Left)
-	// 	{
-	// 		_isMouseDown = false;
-	// 		return true;
-	// 	}
-	// 	return false;
-	// }
-
-	private void RenderOutline(IRenderingContext rc)
-	{
-		Parallel.For(0, _samples.Height - 2, sy =>
-			Parallel.For(0, _samples.Width - 2, sx =>
-			{
-				RenderSegments(rc, sx, sy);
-			})
-		);
-	}
-
-	private void RenderSegments(IRenderingContext rc, int sx, int sy)
-	{
-		var bl = _samples[sy, sx];
-		var br = _samples[sy, sx + 1];
-		var tl = _samples[sy + 1, sx];
-		var tr = _samples[sy + 1, sx + 1];
-
-		Vector2 a, b, c, d;
-
-		// Note: If the grid resolution is 1, there's really no gain in interpolation.
-		if (Interpolated && GridResolution != 1)
-		{
-			a = new Vector2(
-				sx * GridResolution + GridResolution * Lerp(1, tl, tr),
-				sy * GridResolution + GridResolution
-			);
-			b = new Vector2(
-				sx * GridResolution + GridResolution,
-				sy * GridResolution + GridResolution * Lerp(1, br, tr)
-			);
-			c = new Vector2(
-				sx * GridResolution + GridResolution * Lerp(1, bl, br),
-				sy * GridResolution
-			);
-			d = new Vector2(
-				sx * GridResolution,
-				sy * GridResolution + GridResolution * Lerp(1, bl, tl)
-			);
-		}
-		else
-		{
-			a = new Vector2(
-				sx * GridResolution + GridResolution / 2,
-				sy * GridResolution + GridResolution
-			);
-			b = new Vector2(
-				sx * GridResolution + GridResolution,
-				sy * GridResolution + GridResolution / 2
-			);
-			c = new Vector2(
-				sx * GridResolution + GridResolution / 2,
-				sy * GridResolution
-			);
-			d = new Vector2(
-				sx * GridResolution,
-				sy * GridResolution + GridResolution / 2
-			);
-		}
-
-		bl = bl >= 1 ? 1 : 0;
-		br = br >= 1 ? 1 : 0;
-		tl = tl >= 1 ? 1 : 0;
-		tr = tr >= 1 ? 1 : 0;
-		var blobCase = bl + br * 2 + tr * 4 + tl * 8;
-
-		if (blobCase == 0 || blobCase == 15)
-		{
-			// skip
-		}
-		else if (blobCase == 1 || blobCase == 14)
-		{
-			RenderSegment(rc, d, c, OutlineColor);
-		}
-		else if (blobCase == 2 || blobCase == 13)
-		{
-			RenderSegment(rc, b, c, OutlineColor);
-		}
-		else if (blobCase == 3 || blobCase == 12)
-		{
-			RenderSegment(rc, d, b, OutlineColor);
-		}
-		else if (blobCase == 4 || blobCase == 11)
-		{
-			RenderSegment(rc, a, b, OutlineColor);
-		}
-		else if (blobCase == 5)
-		{
-			RenderSegment(rc, d, a, OutlineColor);
-			RenderSegment(rc, c, b, OutlineColor);
-		}
-		else if (blobCase == 6 || blobCase == 9)
-		{
-			RenderSegment(rc, c, a, OutlineColor);
-		}
-		else if (blobCase == 7 || blobCase == 8)
-		{
-			RenderSegment(rc, d, a, OutlineColor);
-		}
-		else if (blobCase == 10)
-		{
-			RenderSegment(rc, a, b, OutlineColor);
-			RenderSegment(rc, c, d, OutlineColor);
-		}
-	}
-
-	private static void RenderSegment(IRenderingContext rc, Vector2 from, Vector2 to, RadialColor color)
-	{
-		if (from == to)
-		{
-			rc.SetPixel(from, color);
-		}
-		else
-		{
-			rc.RenderLine(from, to, color);
-		}
-	}
-
-	private float Lerp(float x, float x0, float x1, float y0 = 0, float y1 = 1)
-	{
-		if (x0 == x1)
-		{
-			return 0.0f;
-		}
-		return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
 	}
 
 	#endregion
