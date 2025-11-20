@@ -94,22 +94,26 @@ class MainState : GameState
 	{
 		RC.Clear();
 
-		var gridResolution = 8;
-		for (var x = 0; x < RC.Width; x += gridResolution)
-		{
-			RC.RenderLine(new Vector2(x, 0), new Vector2(x, RC.Height - 1), RadialColor.Gray);
-		}
-
-		for (var y = 0; y < RC.Height; y += gridResolution)
-		{
-			RC.RenderLine(new Vector2(0, y), new Vector2(RC.Width - 1, y), RadialColor.Gray);
-		}
+		RenderGrid();
 
 		_brush.Render(RC, _mousePosition);
 
 		_samples.Render(RC);
 
 		base.Render(gameTime);
+	}
+
+	private void RenderGrid()
+	{
+		var gridResolution = 8;
+		for (var x = 0; x < RC.Width; x += gridResolution)
+		{
+			RC.RenderLine(new Vector2(x, 0), new Vector2(x, RC.Height - 1), RadialColor.Gray);
+		}
+		for (var y = 0; y < RC.Height; y += gridResolution)
+		{
+			RC.RenderLine(new Vector2(0, y), new Vector2(RC.Width - 1, y), RadialColor.Gray);
+		}
 	}
 
 	/// <summary>
