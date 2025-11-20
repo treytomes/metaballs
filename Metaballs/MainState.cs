@@ -26,6 +26,7 @@ class MainState : GameState
 	private const float CARVING_FACTOR = 0.1f;
 
 	#endregion
+
 	#region Fields
 
 	private readonly MetaballsAppSettings _settings;
@@ -57,6 +58,7 @@ class MainState : GameState
 	private bool Interpolated => _settings.Metaballs.Interpolated;
 	private float GridResolution => _settings.Metaballs.GridResolution;
 	private RadialColor OutlineColor { get; } = RadialColor.Yellow;
+	private int CarvingRadius { get; set; } = CARVING_RADIUS;
 
 	#endregion
 
@@ -113,6 +115,8 @@ class MainState : GameState
 			RC.RenderLine(new Vector2(0, y), new Vector2(RC.Width - 1, y), RadialColor.Gray);
 		}
 
+		RC.RenderCircle(_mousePosition, CarvingRadius, RadialColor.Red);
+
 		RenderOutline(RC);
 
 		base.Render(gameTime);
@@ -126,42 +130,31 @@ class MainState : GameState
 	{
 		if (_drawingDelta != 0)
 		{
-			CarveChunk(_mousePosition, _drawingDelta * CARVING_FACTOR);
+			CarveChunk(_mousePosition, _drawingDelta * CARVING_FACTOR, CarvingRadius);
 		}
 		base.Update(gameTime);
 	}
 
-	/// <summary>
-	/// Handles key down events.
-	/// </summary>
-	/// <param name="e">Key event arguments.</param>
-	/// <returns>True if the event was handled; otherwise, false.</returns>
-	public override bool KeyDown(KeyboardKeyEventArgs e)
-	{
-		return base.KeyDown(e);
-	}
-
-	public override bool KeyUp(KeyboardKeyEventArgs e)
-	{
-		return base.KeyUp(e);
-	}
-
 	public override bool MouseWheel(MouseWheelEventArgs e)
 	{
-		CarveChunk(_mousePosition, Math.Sign(e.OffsetY) * CARVING_FACTOR);
+		CarvingRadius += Math.Sign(e.OffsetY);
+		if (CarvingRadius < 1) CarvingRadius = 1;
+
+		// CarveChunk(_mousePosition, Math.Sign(e.OffsetY) * CARVING_FACTOR);
+
 		return base.MouseWheel(e);
 	}
 
-	private void CarveChunk(Vector2 position, float delta)
+	private void CarveChunk(Vector2 position, float delta, int radius)
 	{
-		for (var dy = -CARVING_RADIUS; dy <= CARVING_RADIUS; dy++)
+		for (var dy = -radius; dy <= radius; dy++)
 		{
-			for (var dx = -CARVING_RADIUS; dx <= CARVING_RADIUS; dx++)
+			for (var dx = -radius; dx <= radius; dx++)
 			{
 				var dist = (float)Math.Sqrt(dy * dy + dx * dx);
-				if (dist > CARVING_RADIUS) continue;
+				if (dist > radius) continue;
 
-				var sampleFactor = delta * (CARVING_RADIUS - dist);
+				var sampleFactor = delta * (radius - dist);
 				var x = dx + (int)position.X;
 				var y = dy + (int)position.Y;
 				var newSample = _samples[y, x] + sampleFactor;
@@ -180,12 +173,12 @@ class MainState : GameState
 	{
 		if (e.Button == MouseButton.Left)
 		{
-			_drawingDelta = -1;
+			_drawingDelta = 1;
 			return true;
 		}
 		else if (e.Button == MouseButton.Right)
 		{
-			_drawingDelta = 1;
+			_drawingDelta = -1;
 			return true;
 		}
 		return false;
@@ -256,7 +249,6 @@ class MainState : GameState
 	// 	}
 	// 	return false;
 	// }
-
 
 	private void RenderOutline(IRenderingContext rc)
 	{
