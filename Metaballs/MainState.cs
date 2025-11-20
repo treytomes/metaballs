@@ -31,7 +31,7 @@ class MainState : GameState
 	private readonly MetaballsAppSettings _settings;
 	private Vector2 _mousePosition = Vector2.Zero;
 
-	private float[,] _samples;
+	private SampleMap _samples;
 	private float _drawingDelta = 0;
 
 	#endregion
@@ -47,9 +47,16 @@ class MainState : GameState
 		: base(resources, rc)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		_samples = new float[rc.Height, rc.Width];
-		Array.Clear(_samples);
+		_samples = new(rc.Width, rc.Height);
 	}
+
+	#endregion
+
+	#region Properties
+
+	private bool Interpolated => _settings.Metaballs.Interpolated;
+	private float GridResolution => _settings.Metaballs.GridResolution;
+	private RadialColor OutlineColor { get; } = RadialColor.Yellow;
 
 	#endregion
 
@@ -253,17 +260,13 @@ class MainState : GameState
 
 	private void RenderOutline(IRenderingContext rc)
 	{
-		Parallel.For(0, _samples.GetLength(0) - 2, sy =>
-			Parallel.For(0, _samples.GetLength(1) - 2, sx =>
+		Parallel.For(0, _samples.Height - 2, sy =>
+			Parallel.For(0, _samples.Width - 2, sx =>
 			{
 				RenderSegments(rc, sx, sy);
 			})
 		);
 	}
-
-	private bool Interpolated { get; } = false;
-	private float GridResolution { get; } = 1;
-	private RadialColor OutlineColor { get; } = RadialColor.Yellow;
 
 	private void RenderSegments(IRenderingContext rc, int sx, int sy)
 	{
