@@ -1,3 +1,4 @@
+using Metaballs.Renderables;
 using OpenTK.Mathematics;
 using RetroTK;
 using RetroTK.Gfx;
@@ -10,10 +11,9 @@ class BlobCollection<TBlob>
 	#region Fields
 
 	private readonly MetaballsSettings _settings;
-	private readonly int _width;
-	private readonly int _height;
 	protected readonly List<TBlob> _blobs;
 	private readonly SampleMap _samples;
+	private Plus _plus = new(Vector2.Zero, 6, RadialColor.Red);
 
 	#endregion
 
@@ -23,8 +23,6 @@ class BlobCollection<TBlob>
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_samples = new SampleMap(settings, width, height);
-		_width = width;
-		_height = height;
 		_blobs = [.. blobs ?? Enumerable.Empty<TBlob>()];
 
 		OutlineColor = new RadialColor(5, 0, 5);
@@ -36,7 +34,17 @@ class BlobCollection<TBlob>
 
 	#region Properties
 
-	public Vector2 CenterOfMass { get; private set; } = Vector2.Zero;
+	public Vector2 CenterOfMass
+	{
+		get
+		{
+			return _plus.Position;
+		}
+		set
+		{
+			_plus.Position = value;
+		}
+	}
 
 	public RadialColor OutlineColor
 	{
@@ -98,6 +106,8 @@ class BlobCollection<TBlob>
 		}
 	}
 
+	public bool ShowCenterOfMass { get; set; } = true;
+
 	#endregion
 
 	#region Methods
@@ -140,8 +150,7 @@ class BlobCollection<TBlob>
 		// Render the blob circles.
 		RenderBlobs(rc);
 
-		rc.RenderLine(CenterOfMass - Vector2.UnitX * 3, CenterOfMass + Vector2.UnitX * 3, RadialColor.Red);
-		rc.RenderLine(CenterOfMass - Vector2.UnitY * 3, CenterOfMass + Vector2.UnitY * 3, RadialColor.Red);
+		if (ShowCenterOfMass) _plus.Render(rc);
 	}
 
 	private void RenderBlobs(IRenderingContext rc)

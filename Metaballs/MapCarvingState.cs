@@ -8,6 +8,7 @@ using OpenTK.Windowing.Common;
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using Metaballs.Brushes;
 using System.Drawing;
+using Metaballs.Renderables;
 
 namespace Metaballs;
 

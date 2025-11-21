@@ -2,7 +2,7 @@ using System.Drawing;
 using OpenTK.Mathematics;
 using RetroTK.Gfx;
 
-namespace Metaballs;
+namespace Metaballs.Renderables;
 
 /// <summary>
 /// A drawable grid component.
