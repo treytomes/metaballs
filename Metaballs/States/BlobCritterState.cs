@@ -9,13 +9,7 @@ using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 
 namespace Metaballs.States;
 
-// Metaballs / Marching Squares Demo
-// https://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/
-// https://jurasic.dev/marching_squares/
-
-// Based on my MiniScript code here: https://gist.github.com/treytomes/3f15d6e93b2448d05a1c1e5fc0125225
-
-class BlobEditorState : GameState
+class BlobCritterState : GameState
 {
 	#region Fields
 
@@ -24,7 +18,7 @@ class BlobEditorState : GameState
 	private Vector2 _mousePosition = Vector2.Zero;
 
 	private BlobFactory _blobFactory;
-	private EventBlobCollection _blobs;
+	private StickyBlobCollection _blobs;
 
 	#endregion
 
@@ -35,12 +29,12 @@ class BlobEditorState : GameState
 	/// </summary>
 	/// <param name="resources">Resource manager for loading assets.</param>
 	/// <param name="rc">Rendering context for drawing.</param>
-	public BlobEditorState(MetaballsAppSettings settings, IResourceManager resources, IRenderingContext rc)
+	public BlobCritterState(MetaballsAppSettings settings, IResourceManager resources, IRenderingContext rc)
 		: base(resources, rc)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_blobFactory = new BlobFactory(_settings.Metaballs);
-		_blobs = new EventBlobCollection(_settings.Metaballs, rc.Width, rc.Height);
+		_blobs = new StickyBlobCollection(_settings.Metaballs, rc.Width, rc.Height);
 	}
 
 	#endregion
@@ -53,11 +47,6 @@ class BlobEditorState : GameState
 	public override void Load()
 	{
 		base.Load();
-
-		for (var n = 0; n < _settings.Metaballs.NumBlobs; n++)
-		{
-			_blobs.Add(new EventBlob(_blobFactory.CreateRandomBlob(new System.Drawing.Rectangle(0, 0, RC.Width, RC.Height))));
-		}
 	}
 
 	/// <summary>
@@ -139,10 +128,10 @@ class BlobEditorState : GameState
 
 	public override bool MouseWheel(MouseWheelEventArgs e)
 	{
-		if (_blobs.MouseWheel(e))
-		{
-			return true;
-		}
+		// if (_blobs.MouseWheel(e))
+		// {
+		// 	return true;
+		// }
 		return base.MouseWheel(e);
 	}
 
@@ -155,7 +144,8 @@ class BlobEditorState : GameState
 	{
 		_mousePosition = e.Position;
 
-		if (_blobs.MouseMove(e)) return true;
+		// if (_blobs.MouseMove(e)) return true;
+		_blobs.MouseMove(e);
 
 		return base.MouseMove(e);
 	}
@@ -167,7 +157,7 @@ class BlobEditorState : GameState
 	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool MouseDown(MouseButtonEventArgs e)
 	{
-		if (_blobs.MouseDown(e)) return true;
+		// if (_blobs.MouseDown(e)) return true;
 
 		if (e.Button == MouseButton.Left)
 		{
@@ -193,7 +183,9 @@ class BlobEditorState : GameState
 		// 	_isMouseDown = false;
 		// 	return true;
 		// }
-		if (_blobs.MouseUp(e)) return true;
+
+		// if (_blobs.MouseUp(e)) return true;
+
 		return false;
 	}
 

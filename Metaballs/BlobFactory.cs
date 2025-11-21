@@ -1,18 +1,15 @@
+using System.Drawing;
 using OpenTK.Mathematics;
-using RetroTK.Gfx;
 
 namespace Metaballs;
 
-class BlobFactory(MetaballsSettings settings, IRenderingContext rc)
+class BlobFactory(MetaballsSettings settings)
 {
-	private int _displayWidth = rc.Width;
-	private int _displayHeight = rc.Height;
-
-	public Blob CreateRandomBlob()
+	public Blob CreateRandomBlob(Rectangle bounds)
 	{
 		var r = (int)Math.Floor(Random.Shared.NextSingle() * (settings.MaxRadius - settings.MinRadius) + settings.MinRadius);
-		var x = (float)Math.Floor(Random.Shared.NextSingle() * (_displayWidth - r * 2) + r);
-		var y = (float)Math.Floor(Random.Shared.NextSingle() * (_displayHeight - r * 2) + r);
+		var x = bounds.Left + (float)Math.Floor(Random.Shared.NextSingle() * (bounds.Width - r * 2) + r);
+		var y = bounds.Top + (float)Math.Floor(Random.Shared.NextSingle() * (bounds.Height - r * 2) + r);
 
 		var v = settings.InitialDrift
 			? new Vector2(
@@ -23,7 +20,7 @@ class BlobFactory(MetaballsSettings settings, IRenderingContext rc)
 
 		var blob = new Blob(new Vector2(x, y), r, v)
 		{
-			DrawCircles = settings.DrawCircles,
+			DrawOutline = settings.DrawCircles,
 		};
 		return blob;
 	}

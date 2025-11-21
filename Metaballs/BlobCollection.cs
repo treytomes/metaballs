@@ -34,7 +34,7 @@ class BlobCollection<TBlob>
 
 	#region Properties
 
-	public Vector2 CenterOfMass
+	public Vector2 Position
 	{
 		get
 		{
@@ -162,10 +162,10 @@ class BlobCollection<TBlob>
 	/// Updates the state.
 	/// </summary>
 	/// <param name="gameTime">Timing values for the current frame.</param>
-	public void Update(GameTime gameTime)
+	public virtual void Update(GameTime gameTime)
 	{
 		Parallel.ForEach(_blobs, blob => blob.Update(gameTime));
-		CalculateCenterOfMass();
+		Position = CalculateCenterOfMass();
 	}
 
 	private void CalculateSamples()
@@ -191,16 +191,17 @@ class BlobCollection<TBlob>
 		return sample;
 	}
 
-	private void CalculateCenterOfMass()
+	protected Vector2 CalculateCenterOfMass()
 	{
-		CenterOfMass = Vector2.Zero;
-		if (_blobs.Count == 0) return;
+		var centerOfMass = Vector2.Zero;
+		if (_blobs.Count == 0) return Vector2.Zero;
 		var totalRadius = _blobs.Sum(x => x.Radius);
 		foreach (var blob in _blobs)
 		{
-			CenterOfMass += blob.Radius * blob.Position;
+			centerOfMass += blob.Radius * blob.Position;
 		}
-		CenterOfMass /= totalRadius;
+		centerOfMass /= totalRadius;
+		return centerOfMass;
 	}
 
 	#endregion

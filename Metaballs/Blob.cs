@@ -21,7 +21,7 @@ class Blob
 
 	public virtual bool IsActive { get; } = true;
 
-	public bool DrawCircles { get; init; }
+	public bool DrawOutline { get; init; }
 	public Vector2 Position { get; private set; }
 	public int Radius { get; private set; }
 	public virtual RadialColor Color { get; } = RadialColor.Red;
@@ -40,6 +40,7 @@ class Blob
 
 	public void Render(IRenderingContext rc)
 	{
+		// Note: Disabling the bounce.  Doesn't play with with the sticky blob collection.
 		if (Left < 0 || Right >= rc.Width)
 		{
 			Velocity = new Vector2(-Velocity.X, Velocity.Y);
@@ -48,7 +49,7 @@ class Blob
 		{
 			Velocity = new Vector2(Velocity.X, -Velocity.Y);
 		}
-		if (DrawCircles)
+		if (DrawOutline)
 		{
 			rc.RenderCircle(Position, Radius, Color);
 		}
