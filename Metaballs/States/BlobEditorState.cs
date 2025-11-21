@@ -7,7 +7,7 @@ using OpenTK.Windowing.Common;
 
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 
-namespace Metaballs;
+namespace Metaballs.States;
 
 // Metaballs / Marching Squares Demo
 // https://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/

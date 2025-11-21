@@ -10,7 +10,7 @@ using Metaballs.Brushes;
 using System.Drawing;
 using Metaballs.Renderables;
 
-namespace Metaballs;
+namespace Metaballs.States;
 
 // Metaballs / Marching Squares Demo
 // https://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/

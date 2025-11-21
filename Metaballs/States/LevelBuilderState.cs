@@ -9,7 +9,7 @@ using RetroTK.World;
 using RetroTK;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace Metaballs.States;
+namespace Metaballs.Metaballs.States;
 
 class LevelBuilderState : GameState
 {

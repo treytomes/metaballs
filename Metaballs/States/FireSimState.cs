@@ -10,7 +10,7 @@ using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using Metaballs.Fire.Particles;
 using Metaballs.Fire;
 
-namespace Metaballs;
+namespace Metaballs.States;
 
 /// <summary>
 /// Arrow keys and WASD can change the fire parameters.  Mouse wheel changes the pen size.  Left click to draw.
