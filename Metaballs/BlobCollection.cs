@@ -36,6 +36,8 @@ class BlobCollection<TBlob>
 
 	#region Properties
 
+	public Vector2 CenterOfMass { get; private set; } = Vector2.Zero;
+
 	public RadialColor OutlineColor
 	{
 		get
@@ -69,6 +71,30 @@ class BlobCollection<TBlob>
 		set
 		{
 			_samples.SecondaryFillColor = value;
+		}
+	}
+
+	public bool IsOutlined
+	{
+		get
+		{
+			return _samples.IsOutlined;
+		}
+		set
+		{
+			_samples.IsOutlined = value;
+		}
+	}
+
+	public bool IsFilled
+	{
+		get
+		{
+			return _samples.IsFilled;
+		}
+		set
+		{
+			_samples.IsFilled = value;
 		}
 	}
 
@@ -113,6 +139,9 @@ class BlobCollection<TBlob>
 
 		// Render the blob circles.
 		RenderBlobs(rc);
+
+		rc.RenderLine(CenterOfMass - Vector2.UnitX * 3, CenterOfMass + Vector2.UnitX * 3, RadialColor.Red);
+		rc.RenderLine(CenterOfMass - Vector2.UnitY * 3, CenterOfMass + Vector2.UnitY * 3, RadialColor.Red);
 	}
 
 	private void RenderBlobs(IRenderingContext rc)
@@ -127,6 +156,7 @@ class BlobCollection<TBlob>
 	public void Update(GameTime gameTime)
 	{
 		Parallel.ForEach(_blobs, blob => blob.Update(gameTime));
+		CalculateCenterOfMass();
 	}
 
 	private void CalculateSamples()
@@ -150,6 +180,18 @@ class BlobCollection<TBlob>
 		}
 		_samples[sy, sx] = sample;
 		return sample;
+	}
+
+	private void CalculateCenterOfMass()
+	{
+		CenterOfMass = Vector2.Zero;
+		if (_blobs.Count == 0) return;
+		var totalRadius = _blobs.Sum(x => x.Radius);
+		foreach (var blob in _blobs)
+		{
+			CenterOfMass += blob.Radius * blob.Position;
+		}
+		CenterOfMass /= totalRadius;
 	}
 
 	#endregion
