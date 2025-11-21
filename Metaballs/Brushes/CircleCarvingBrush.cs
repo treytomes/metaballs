@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using RetroTK;
 using RetroTK.Gfx;
 
 namespace Metaballs.Brushes;
@@ -7,7 +8,7 @@ class CircleCarvingBrush : ICarvingBrush
 {
 	#region Constants
 
-	private const float DEFAULT_INTENSITY = 4f;
+	private const float DEFAULT_INTENSITY = 2f;
 	private const int DEFAULT_RADIUS = 8;
 	private const int MIN_RADIUS = 1;
 
@@ -17,6 +18,7 @@ class CircleCarvingBrush : ICarvingBrush
 
 	private float _intensity;
 	private int _radius;
+	private int _radiusSquared;
 
 	#endregion
 
@@ -26,9 +28,12 @@ class CircleCarvingBrush : ICarvingBrush
 	{
 		_intensity = intensity;
 		_radius = radius;
+		_radiusSquared = _radius * _radius;
 	}
 
 	#endregion
+
+	#region Properties
 
 	public float Intensity
 	{
@@ -52,30 +57,39 @@ class CircleCarvingBrush : ICarvingBrush
 		{
 			if (value <= 0) value = MIN_RADIUS;
 			_radius = value;
+			_radiusSquared = _radius * _radius;
 		}
 	}
+
+	#endregion
+
+	#region Methods
 
 	public void Render(IRenderingContext rc, Vector2 position)
 	{
 		rc.RenderCircle(position, Radius, RadialColor.Red);
 	}
 
-	public void Carve(SampleMap samples, Vector2 position)
+	public void Carve(GameTime gameTime, SampleMap samples, Vector2 position)
 	{
-		for (var dy = -Radius; dy <= Radius; dy++)
-		{
-			for (var dx = -Radius; dx <= Radius; dx++)
-			{
-				var dist = (float)Math.Sqrt(dy * dy + dx * dx);
-				if (dist > Radius) continue;
+		var baseFactor = (float)gameTime.ElapsedTime.TotalSeconds * Intensity;
 
-				var sampleFactor = Intensity * (Radius - dist);
+		Parallel.For(-Radius, Radius + 1, dy =>
+		{
+			Parallel.For(-Radius, Radius + 1, dx =>
+			{
+				var distSquared = dy * dy + dx * dx;
+				if (distSquared > _radiusSquared) return;
+
+				var sampleFactor = baseFactor * (Radius - (float)Math.Sqrt(distSquared));
 				var x = dx + (int)position.X;
 				var y = dy + (int)position.Y;
 				var newSample = samples[y, x] + sampleFactor;
 				if (newSample < 0) newSample = 0;
 				samples[y, x] = newSample;
-			}
-		}
+			});
+		});
 	}
+
+	#endregion
 }

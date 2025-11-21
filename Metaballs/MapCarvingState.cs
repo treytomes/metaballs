@@ -113,7 +113,7 @@ class MapCarvingState : GameState
 	{
 		if (_isDrawing)
 		{
-			_brush.Carve(_samples, _mousePosition);
+			_brush.Carve(gameTime, _samples, _mousePosition);
 		}
 		base.Update(gameTime);
 	}
