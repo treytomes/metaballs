@@ -50,6 +50,7 @@ class MapCarvingState : GameState
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_samples = new(_settings.Metaballs, rc.Width, rc.Height);
+		_samples.Fill(2);
 		_grid = new(8, RadialColor.Gray, new Rectangle(0, 0, rc.Width, rc.Height));
 	}
 
@@ -98,9 +99,8 @@ class MapCarvingState : GameState
 		RC.Clear();
 
 		_grid.Render(RC);
-		_brush.Render(RC, _mousePosition);
-
 		_samples.Render(RC);
+		_brush.Render(RC, _mousePosition);
 
 		base.Render(gameTime);
 	}

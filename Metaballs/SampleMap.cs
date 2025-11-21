@@ -77,6 +77,13 @@ class SampleMap
 		Array.Clear(_data);
 	}
 
+	public void Fill(float value)
+	{
+		Parallel.For(0, Height, y =>
+			Parallel.For(0, Width, x => _data[y, x] = value)
+		);
+	}
+
 	public void Render(IRenderingContext rc)
 	{
 		RenderBayerField(rc, PrimaryFillColor, SecondaryFillColor);
