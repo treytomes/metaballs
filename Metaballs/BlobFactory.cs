@@ -24,4 +24,15 @@ class BlobFactory(MetaballsSettings settings)
 		};
 		return blob;
 	}
+
+	public Blob CreateRadialBlob(Vector2 position, CreateRadialBlobProps props)
+	{
+		var radius = Random.Shared.Next(props.MinRadius, props.MaxRadius);
+		var angle = Random.Shared.Next(0, 360) * Math.PI / 180.0f;
+		var offset = new Vector2(radius * (float)Math.Cos(angle), radius * (float)Math.Sin(angle));
+		return new Blob(position + offset, radius)
+		{
+			DrawOutline = props.DrawOutline,
+		};
+	}
 }

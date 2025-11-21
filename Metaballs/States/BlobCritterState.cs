@@ -18,7 +18,7 @@ class BlobCritterState : GameState
 	private Vector2 _mousePosition = Vector2.Zero;
 
 	private BlobFactory _blobFactory;
-	private StickyBlobCollection _blobs;
+	private BlobCritter _blobs;
 
 	#endregion
 
@@ -34,7 +34,7 @@ class BlobCritterState : GameState
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_blobFactory = new BlobFactory(_settings.Metaballs);
-		_blobs = new StickyBlobCollection(_settings.Metaballs, rc.Width, rc.Height);
+		_blobs = new BlobCritter(_settings.Metaballs, rc.Width, rc.Height, new Vector2(150, 150), new CreateBlobCritterProps());
 	}
 
 	#endregion

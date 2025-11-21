@@ -7,41 +7,27 @@ namespace Metaballs;
 // Note: A stick blob collection will pull all of it's blobs towards the center of mass.
 // Each blob will need a velocity.  There should also be some kind of spring constant.
 
-class StickyBlobCollection : BlobCollection<Blob>
+class BlobCritter : BlobCollection<Blob>
 {
 	#region Fields
-
-	// private bool _isCenterOfMassCalculated = false;
 
 	#endregion
 
 	#region Constructors
 
-	public StickyBlobCollection(MetaballsSettings settings, int width, int height, IEnumerable<Blob>? blobs = null)
-		: base(settings, width, height, blobs)
+	public BlobCritter(MetaballsSettings settings, int width, int height, Vector2 position, CreateBlobCritterProps props)
+		: base(settings, width, height)
 	{
-		const int NUM_BLOBS = 3;
-		const int MIN_RADIUS = 8;
-		const int MAX_RADIUS = 16;
+		Position = position;
+		Speed = props.MinSpeed + Random.Shared.NextSingle() * (props.MaxSpeed - props.MinSpeed);
+		Friction = props.MinFriction + Random.Shared.NextSingle() * (props.MaxFriction - props.MinFriction);
 
-		Position = new Vector2(150, 150);
-
-		for (var n = 0; n < NUM_BLOBS; n++)
+		var factory = new BlobFactory(settings);
+		var numBlobs = Random.Shared.Next(props.MinNumBlobs, props.MaxNumBlobs + 1);
+		for (var n = 0; n < numBlobs; n++)
 		{
-			var radius = Random.Shared.Next(MIN_RADIUS, MAX_RADIUS);
-			var angle = Random.Shared.Next(0, 360) * Math.PI / 180.0f;
-			var position = new Vector2(radius * (float)Math.Cos(angle), radius * (float)Math.Sin(angle));
-			_blobs.Add(new Blob(Position + position, radius)
-			{
-				DrawOutline = true,
-			});
+			_blobs.Add(factory.CreateRadialBlob(Position, props.BlobProps));
 		}
-
-		// var fact = new BlobFactory(settings);
-		// for (var n = 0; n < settings.NumBlobs; n++)
-		// {
-		// 	_blobs.Add(fact.CreateRandomBlob(new System.Drawing.Rectangle(0, 0, width, height)));
-		// }
 	}
 
 	#endregion
@@ -49,9 +35,8 @@ class StickyBlobCollection : BlobCollection<Blob>
 	#region Properties
 
 	public Vector2 Velocity { get; set; } = Vector2.Zero;
-	public float Speed { get; set; } = 10f;
-	public float Friction { get; set; } = 1000f;
-	// public bool AllowFloatingCenterOfMass { get; set; } = true;
+	public float Speed { get; set; }
+	public float Friction { get; set; }
 
 	#endregion
 
@@ -78,17 +63,19 @@ class StickyBlobCollection : BlobCollection<Blob>
 			blob.Update(gameTime);
 		});
 
-		// if (!_isCenterOfMassCalculated)
-		// {
-		// 	Position = CalculateCenterOfMass();
-		// 	_isCenterOfMassCalculated = true;
-		// }
-
 		Position += Velocity * Speed * (float)gameTime.ElapsedTime.TotalSeconds;
+
+		// After the blobs move in their chosen direction, they get pulled back a bit by their own inertia towards the center of mass.
+		var centerOfMass = CalculateCenterOfMass();
+		var inertia = Speed / 2;
+		var massDistance = centerOfMass - Position;
+		var massDirection = massDistance.Normalized();
+		Position += massDirection * inertia * (float)gameTime.ElapsedTime.TotalSeconds;
 	}
 
 	public void MouseMove(MouseMoveEventArgs e)
 	{
+		// Note: This is more of a "mouse-following" behavior.
 		var distance = e.Position - Position;
 		var direction = distance.Normalized();
 		Velocity = direction;
