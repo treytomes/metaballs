@@ -7,20 +7,6 @@ namespace Metaballs;
 class BlobCollection<TBlob>
 	where TBlob : Blob
 {
-	#region Constants
-
-	/// <summary>
-	/// Bayer 4x4 dithering matrix.
-	/// </summary>
-	private static readonly int[,] BAYER_MATRIX = new int[,] {
-		{  0, 12,  3, 15 },
-		{  8,  4, 11,  7 },
-		{  2, 14,  1, 13 },
-		{ 10,  6,  9,  5 }
-	};
-
-	#endregion
-
 	#region Fields
 
 	private readonly MetaballsSettings _settings;
@@ -42,6 +28,8 @@ class BlobCollection<TBlob>
 		_blobs = [.. blobs ?? Enumerable.Empty<TBlob>()];
 
 		OutlineColor = new RadialColor(5, 0, 5);
+		PrimaryColor = new RadialColor(0, 5, 0);
+		SecondaryColor = new RadialColor(0, 2, 0);
 	}
 
 	#endregion
@@ -60,8 +48,29 @@ class BlobCollection<TBlob>
 		}
 	}
 
-	public RadialColor PrimaryColor { get; set; } = new RadialColor(0, 5, 0);
-	public RadialColor SecondaryColor { get; set; } = new RadialColor(0, 2, 0);
+	public RadialColor PrimaryColor
+	{
+		get
+		{
+			return _samples.PrimaryFillColor;
+		}
+		set
+		{
+			_samples.PrimaryFillColor = value;
+		}
+	}
+
+	public RadialColor SecondaryColor
+	{
+		get
+		{
+			return _samples.SecondaryFillColor;
+		}
+		set
+		{
+			_samples.SecondaryFillColor = value;
+		}
+	}
 
 	#endregion
 
@@ -99,53 +108,11 @@ class BlobCollection<TBlob>
 		// Pre-calculate the samples.
 		CalculateSamples();
 
-		RenderBayerField(rc);
-
-		// Render the outline.
+		// Render the samples.
 		_samples.Render(rc);
 
 		// Render the blob circles.
 		RenderBlobs(rc);
-	}
-
-	private void RenderBayerField(IRenderingContext rc)
-	{
-		// Note: I figured out the inverse Bayer matrix trick while trying to figure out how to render a heat field.
-		Parallel.For(0, _height, y =>
-			Parallel.For(0, _width, x =>
-			{
-				var pos = new Vector2(x, y);
-
-				// Calculate dithering base value.
-				var intensity = _samples[y, x];
-
-				// Don't fill areas outside the blob range.
-				if (intensity < 1.0f) return;
-
-				// This will discount sample values that fall outside our range.
-				intensity -= 1f;
-
-				intensity = RetroTK.MathHelper.Clamp(intensity, 0.0f, 1.0f);
-
-				// Note: Applying a sin function to the intensity seems to give a nicer drop-off appearance.
-				// intensity = (float)Math.Sin(intensity);
-
-				// Get the appropriate threshold from the Bayer matrix (0-15, normalized to 0.0-1.0)
-				var bayerX = RetroTK.MathHelper.Modulus(Math.Abs((int)pos.X), 4);
-				var bayerY = RetroTK.MathHelper.Modulus(Math.Abs((int)pos.Y), 4);
-				var threshold = BAYER_MATRIX[bayerY, bayerX] / 16.0f;
-				var color = SecondaryColor.Lerp(PrimaryColor, intensity);
-				if (intensity >= threshold)
-				{
-					rc.SetPixel(pos, color);
-				}
-				else
-				{
-					// The fill color for anything below the dithering threshold.
-					rc.SetPixel(pos, SecondaryColor.Lerp(PrimaryColor, intensity * 0.5f));
-				}
-			})
-		);
 	}
 
 	private void RenderBlobs(IRenderingContext rc)
