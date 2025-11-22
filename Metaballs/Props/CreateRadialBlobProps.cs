@@ -1,4 +1,4 @@
-namespace Metaballs;
+namespace Metaballs.Props;
 
 record CreateRadialBlobProps
 {

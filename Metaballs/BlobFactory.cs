@@ -1,5 +1,6 @@
-using System.Drawing;
+using Metaballs.Props;
 using OpenTK.Mathematics;
+using System.Drawing;
 
 namespace Metaballs;
 

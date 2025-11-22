@@ -6,6 +6,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
+using Metaballs.Props;
 
 namespace Metaballs.States;
 

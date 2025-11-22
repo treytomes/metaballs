@@ -1,3 +1,4 @@
+using Metaballs.Props;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using RetroTK;
