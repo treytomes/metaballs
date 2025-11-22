@@ -57,7 +57,7 @@ class BlobCritter : BlobCollection<Blob>
 			var distFromTarget = (targetPosition - blob.Position).Length;
 
 			// The distance should make a bigger difference on acceleration as the blob gets further away.
-			var springForce = distFromTarget * distFromTarget * 1.5f; // * 0.1f;
+			var springForce = distFromTarget * distFromTarget * 1.5f / 10f; // * 0.1f;
 
 			blob.Velocity += (float)gameTime.ElapsedTime.TotalSeconds * direction * springForce * blob.Radius / Friction;
 			blob.Update(gameTime);
@@ -65,7 +65,7 @@ class BlobCritter : BlobCollection<Blob>
 
 		Position += Velocity * Speed * (float)gameTime.ElapsedTime.TotalSeconds;
 
-		// After the blobs move in their chosen direction, they get pulled back a bit by their own inertia towards the center of mass.
+		// After the critter moves in its chosen direction, they get pulled back a bit by their own inertia towards the center of mass.
 		var centerOfMass = CalculateCenterOfMass();
 		var inertia = Speed / 2;
 		var massDistance = centerOfMass - Position;
