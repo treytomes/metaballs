@@ -1,3 +1,4 @@
+using System.Collections;
 using Metaballs.Renderables;
 using OpenTK.Mathematics;
 using RetroTK;
@@ -5,7 +6,7 @@ using RetroTK.Gfx;
 
 namespace Metaballs;
 
-class BlobCollection<TBlob>
+class BlobCollection<TBlob> : IEnumerable<TBlob>
 	where TBlob : Blob
 {
 	#region Fields
@@ -34,7 +35,7 @@ class BlobCollection<TBlob>
 
 	#region Properties
 
-	public Vector2 Position
+	public Vector2 CenterOfMass
 	{
 		get
 		{
@@ -112,6 +113,16 @@ class BlobCollection<TBlob>
 
 	#region Methods
 
+	public IEnumerator<TBlob> GetEnumerator()
+	{
+		return ((IEnumerable<TBlob>)_blobs).GetEnumerator();
+	}
+
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		return ((IEnumerable)_blobs).GetEnumerator();
+	}
+
 	public void Add(TBlob blob)
 	{
 		if (_blobs.Contains(blob))
@@ -165,7 +176,7 @@ class BlobCollection<TBlob>
 	public virtual void Update(GameTime gameTime)
 	{
 		Parallel.ForEach(_blobs, blob => blob.Update(gameTime));
-		Position = CalculateCenterOfMass();
+		CenterOfMass = CalculateCenterOfMass();
 	}
 
 	private void CalculateSamples()

@@ -76,6 +76,7 @@ class EventBlobCollection : BlobCollection<EventBlob>
 		_mouseDragStart = null;
 		if (MouseFocus != null)
 		{
+			MouseFocus.Velocity = Vector2.Zero;
 			MouseFocus.LoseMouseFocus();
 
 			if (e.Button == MouseButton.Right)

@@ -128,10 +128,10 @@ class BlobCritterState : GameState
 
 	public override bool MouseWheel(MouseWheelEventArgs e)
 	{
-		// if (_blobs.MouseWheel(e))
-		// {
-		// 	return true;
-		// }
+		if (_blobs.MouseWheel(e))
+		{
+			return true;
+		}
 		return base.MouseWheel(e);
 	}
 
@@ -144,8 +144,7 @@ class BlobCritterState : GameState
 	{
 		_mousePosition = e.Position;
 
-		// if (_blobs.MouseMove(e)) return true;
-		_blobs.MouseMove(e);
+		if (_blobs.MouseMove(e)) return true;
 
 		return base.MouseMove(e);
 	}
@@ -157,7 +156,7 @@ class BlobCritterState : GameState
 	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool MouseDown(MouseButtonEventArgs e)
 	{
-		// if (_blobs.MouseDown(e)) return true;
+		if (_blobs.MouseDown(e)) return true;
 
 		if (e.Button == MouseButton.Left)
 		{
@@ -184,7 +183,7 @@ class BlobCritterState : GameState
 		// 	return true;
 		// }
 
-		// if (_blobs.MouseUp(e)) return true;
+		if (_blobs.MouseUp(e)) return true;
 
 		return false;
 	}

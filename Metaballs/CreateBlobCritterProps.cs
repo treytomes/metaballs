@@ -13,6 +13,6 @@ record CreateBlobCritterProps
 	{
 		MinRadius = 8,
 		MaxRadius = 16,
-		DrawOutline = false
+		DrawOutline = true
 	};
 }
