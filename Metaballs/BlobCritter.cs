@@ -1,6 +1,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using RetroTK;
+using RetroTK.Events;
 using RetroTK.Gfx;
 
 namespace Metaballs;
@@ -8,7 +9,7 @@ namespace Metaballs;
 // Note: A stick blob collection will pull all of it's blobs towards the center of mass.
 // Each blob will need a velocity.  There should also be some kind of spring constant.
 
-class BlobCritter
+class BlobCritter : IEventHandler
 {
 	#region Fields
 
@@ -117,6 +118,21 @@ class BlobCritter
 	public bool MouseWheel(MouseWheelEventArgs e)
 	{
 		return _blobs.MouseWheel(e);
+	}
+
+	public bool KeyDown(KeyboardKeyEventArgs e)
+	{
+		return _blobs.KeyDown(e);
+	}
+
+	public bool KeyUp(KeyboardKeyEventArgs e)
+	{
+		return _blobs.KeyUp(e);
+	}
+
+	public bool TextInput(TextInputEventArgs e)
+	{
+		return _blobs.TextInput(e);
 	}
 
 	#endregion

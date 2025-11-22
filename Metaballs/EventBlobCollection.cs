@@ -1,10 +1,11 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using RetroTK.Events;
 
 namespace Metaballs;
 
-class EventBlobCollection : BlobCollection<EventBlob>
+class EventBlobCollection : BlobCollection<EventBlob>, IEventHandler
 {
 	#region Fields
 
@@ -98,6 +99,21 @@ class EventBlobCollection : BlobCollection<EventBlob>
 		}
 		MouseHover.SetRadius(MouseHover.Radius + Math.Sign(e.OffsetY));
 		return true;
+	}
+
+	public bool KeyDown(KeyboardKeyEventArgs e)
+	{
+		return false;
+	}
+
+	public bool KeyUp(KeyboardKeyEventArgs e)
+	{
+		return false;
+	}
+
+	public bool TextInput(TextInputEventArgs e)
+	{
+		return false;
 	}
 
 	#endregion
