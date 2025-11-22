@@ -107,6 +107,12 @@ class SampleMap
 				// This will discount sample values that fall outside our range.
 				intensity -= 1f;
 
+				if (intensity > 0.99f)
+				{
+					rc.SetPixel(pos, primaryColor);
+					return;
+				}
+
 				intensity = RetroTK.MathHelper.Clamp(intensity, 0.0f, 1.0f);
 
 				// Note: Applying a sin function to the intensity seems to give a nicer drop-off appearance.
