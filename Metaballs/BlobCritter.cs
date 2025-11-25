@@ -15,6 +15,26 @@ namespace Metaballs;
 
 class BlobCritter : IEventHandler
 {
+	#region Constants
+
+	/// <summary>
+	/// Cohesion keeping the spring from moving.
+	/// </summary>
+	private const float SpringStiffness = 45f;
+
+	/// <summary>
+	/// Prevents jitter.
+	/// </summary>
+	private const float SPRING_DAMPING = 10f;
+	private const float MASS_SCALAR = 1f;
+
+	/// <summary>
+	/// Helps the goo stay cohesive.
+	/// </summary>
+	private const float CENTER_PULL = 1.2f;
+
+	#endregion
+
 	#region Fields
 
 	private readonly EventBlobCollection _blobs;
@@ -82,58 +102,52 @@ class BlobCritter : IEventHandler
 
 	public void Update(GameTime gameTime)
 	{
-		float dt = (float)gameTime.ElapsedTime.TotalSeconds;
+		var dt = (float)gameTime.ElapsedTime.TotalSeconds;
 
-		// --- Physical constants ---
-		const float SpringStiffness = 45f;  // stronger cohesion
-		const float SpringDamping = 10f;  // prevents jitter
-		const float MassScalar = 1f;
-		const float CenterPull = 1.2f; // helps goo stay cohesive
-
-		// --- Apply spring forces to each blob in parallel ---
+		// --- Apply spring forces to each blob in parallel. ---
 		Parallel.ForEach(_blobs, blob =>
 		{
-			float mass = blob.Radius * MassScalar;
+			var mass = blob.Radius * MASS_SCALAR;
 
-			// Desired "rest" position of the blob
-			Vector2 toBlob = blob.Position - Position;
-			float dist = toBlob.Length;
+			// Desired "rest" position of the blob.
+			var toBlob = blob.Position - Position;
+			var dist = toBlob.Length;
 
 			Vector2 direction;
 			if (dist > 0f)
 				direction = toBlob / dist;
 			else
-				direction = Vector2.UnitX; // arbitrary but safe fallback
+				direction = Vector2.UnitX; // Arbitrary but safe fallback.
 
-			// Desired distance from center
-			float targetDist = blob.Radius * 0.5f;
+			// Desired distance from center.
+			var targetDist = blob.Radius * 0.5f;
 
-			// Signed displacement
-			float displacement = dist - targetDist;
+			// Signed displacement.
+			var displacement = dist - targetDist;
 
-			// Hooke’s law spring force
-			float springForceMag = SpringStiffness * displacement;
+			// Hooke’s law spring force.
+			var springForceMag = SpringStiffness * displacement;
 
-			// Velocity along spring axis (for damping)
-			float radialVel = Vector2.Dot(blob.Velocity - Velocity, direction);
-			float dampingForceMag = -SpringDamping * radialVel;
+			// Velocity along spring axis (for damping).
+			var radialVel = Vector2.Dot(blob.Velocity - Velocity, direction);
+			var dampingForceMag = -SPRING_DAMPING * radialVel;
 
-			// Combined force (scalar)
-			float totalForceMag = springForceMag + dampingForceMag;
+			// Combined force (scalar).
+			var totalForceMag = springForceMag + dampingForceMag;
 
-			// Convert scalar → vector
+			// Convert scalar → vector.
 			Vector2 force = direction * totalForceMag;
 
-			// Apply acceleration
-			blob.Velocity += (force / mass) * dt;
+			// Apply acceleration.
+			blob.Velocity += force / mass * dt;
 		});
 
-		// --- Update blob positions + clamp to bounding area ---
+		// --- Update blob positions + clamp to bounding area. ---
 		Position += Velocity * Speed * dt;
 		_bounds.MoveTo(Position);
-		_blobs.Update(gameTime, _bounds); // your reflection logic applies here
+		_blobs.Update(gameTime, _bounds);
 
-		// --- Optional: pull center toward the blob cluster ---
+		// --- Optional: pull center toward the blob cluster. ---
 		// This prevents the center from drifting and makes the critter act cohesive.
 		Vector2 com = _blobs.CenterOfMass;
 		Vector2 comOffset = com - Position;
@@ -141,15 +155,17 @@ class BlobCritter : IEventHandler
 		if (comOffset.LengthSquared > 0.0001f)
 		{
 			Vector2 comDir = comOffset.Normalized();
-			Velocity += comDir * CenterPull * dt;
+			Velocity += comDir * CENTER_PULL * dt;
 		}
 
-		// --- Apply critter-wide friction ---
-		Velocity *= (1f - Friction * dt);
+		// --- Apply critter-wide friction. ---
+		Velocity *= 1f - Friction * dt;
 
-		// Update behaviors (mouse chasing, wandering, etc.)
+		// Update behaviors (mouse chasing, wandering, etc.).
 		foreach (var behavior in _behaviors)
+		{
 			behavior.Update(gameTime);
+		}
 	}
 
 	public void Add(EventBlob blob)
