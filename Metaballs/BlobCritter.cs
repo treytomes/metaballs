@@ -33,8 +33,6 @@ class BlobCritter : IEventHandler
 	/// </summary>
 	private const float CENTER_PULL = 1.2f;
 
-	private const bool SHOW_TARGET = false;
-
 	#endregion
 
 	#region Fields
@@ -49,9 +47,9 @@ class BlobCritter : IEventHandler
 
 	#region Constructors
 
-	public BlobCritter(MetaballsSettings settings, int width, int height, Vector2 position, CreateBlobCritterProps props)
+	public BlobCritter(MetaballsAppSettings settings, int width, int height, Vector2 position, CreateBlobCritterProps props)
 	{
-		_blobs = new(settings, width, height);
+		_blobs = new(settings.Metaballs, width, height);
 
 		Speed = props.MinSpeed + Random.Shared.NextSingle() * (props.MaxSpeed - props.MinSpeed);
 		Friction = props.MinFriction + Random.Shared.NextSingle() * (props.MaxFriction - props.MinFriction);
@@ -83,7 +81,7 @@ class BlobCritter : IEventHandler
 			OutlineColor = RadialColor.Yellow,
 		});
 
-		_target.IsVisible = SHOW_TARGET;
+		_target.IsVisible = settings.Debug;
 	}
 
 	#endregion

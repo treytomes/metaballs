@@ -4,15 +4,15 @@ using System.Drawing;
 
 namespace Metaballs;
 
-class BlobFactory(MetaballsSettings settings)
+class BlobFactory(MetaballsAppSettings settings)
 {
 	public Blob CreateRandomBlob(Rectangle bounds)
 	{
-		var r = (int)Math.Floor(Random.Shared.NextSingle() * (settings.MaxRadius - settings.MinRadius) + settings.MinRadius);
+		var r = (int)Math.Floor(Random.Shared.NextSingle() * (settings.Metaballs.MaxRadius - settings.Metaballs.MinRadius) + settings.Metaballs.MinRadius);
 		var x = bounds.Left + (float)Math.Floor(Random.Shared.NextSingle() * (bounds.Width - r * 2) + r);
 		var y = bounds.Top + (float)Math.Floor(Random.Shared.NextSingle() * (bounds.Height - r * 2) + r);
 
-		var v = settings.InitialDrift
+		var v = settings.Metaballs.InitialDrift
 			? new Vector2(
 				(Random.Shared.NextSingle() * 3 - 2) * Random.Shared.NextSingle() * 8 + 8,
 				(Random.Shared.NextSingle() * 3 - 2) * Random.Shared.NextSingle() * 8 + 8
@@ -21,7 +21,7 @@ class BlobFactory(MetaballsSettings settings)
 
 		var blob = new Blob(new Vector2(x, y), r, v)
 		{
-			DrawOutline = settings.DrawCircles,
+			DrawOutline = settings.Debug,
 		};
 		return blob;
 	}
@@ -33,7 +33,7 @@ class BlobFactory(MetaballsSettings settings)
 		var offset = new Vector2(radius * (float)Math.Cos(angle), radius * (float)Math.Sin(angle));
 		return new Blob(position + offset, radius)
 		{
-			DrawOutline = props.DrawOutline,
+			DrawOutline = settings.Debug,
 		};
 	}
 }

@@ -39,7 +39,7 @@ class BlobEditorState : GameState
 		: base(resources, rc)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		_blobFactory = new BlobFactory(_settings.Metaballs);
+		_blobFactory = new BlobFactory(_settings);
 		_blobs = new EventBlobCollection(_settings.Metaballs, rc.Width, rc.Height);
 	}
 
@@ -93,7 +93,7 @@ class BlobEditorState : GameState
 		RC.Clear();
 
 		// Draw the grid.
-		if (_settings.Metaballs.ShowGrid)
+		if (_settings.Debug)
 		{
 			for (var x = 0; x < RC.Width; x += _settings.Metaballs.GridResolution)
 			{

@@ -7,6 +7,7 @@ using OpenTK.Windowing.Common;
 
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using Metaballs.Props;
+using Metaballs.Renderables;
 
 namespace Metaballs.States;
 
@@ -20,6 +21,7 @@ class BlobCritterState : GameState
 
 	private BlobFactory _blobFactory;
 	private BlobCritter _blobs;
+	private Grid _grid;
 
 	#endregion
 
@@ -34,8 +36,17 @@ class BlobCritterState : GameState
 		: base(resources, rc)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		_blobFactory = new BlobFactory(_settings.Metaballs);
-		_blobs = new BlobCritter(_settings.Metaballs, rc.Width, rc.Height, new Vector2(150, 150), new CreateBlobCritterProps());
+		_blobFactory = new BlobFactory(_settings);
+		_blobs = new BlobCritter(_settings, rc.Width, rc.Height, new Vector2(150, 150), new CreateBlobCritterProps());
+
+		_grid = new()
+		{
+			Position = new Vector2(rc.Width / 2, rc.Height / 2),
+			Width = rc.Width,
+			Height = rc.Height,
+			Resolution = 8,
+			Color = RadialColor.Gray
+		};
 	}
 
 	#endregion
@@ -83,17 +94,9 @@ class BlobCritterState : GameState
 		RC.Clear();
 
 		// Draw the grid.
-		if (_settings.Metaballs.ShowGrid)
+		if (_settings.Debug)
 		{
-			for (var x = 0; x < RC.Width; x += _settings.Metaballs.GridResolution)
-			{
-				RC.RenderLine(new Vector2(x, 0), new Vector2(x, RC.Height - 1), RadialColor.Gray);
-			}
-
-			for (var y = 0; y < RC.Height; y += _settings.Metaballs.GridResolution)
-			{
-				RC.RenderLine(new Vector2(0, y), new Vector2(RC.Width - 1, y), RadialColor.Gray);
-			}
+			_grid.Render(RC);
 		}
 
 		_blobs.Render(RC);
