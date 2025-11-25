@@ -9,6 +9,11 @@ record CreateBlobCritterProps
 	public float MinFriction { get; init; } = 200f;
 	public float MaxFriction { get; init; } = 400f;
 
+	/// <summary>
+	/// How far can the critter stretch beyond it's base radius?
+	/// </summary>
+	public float StretchScale { get; init; } = 1.5f;
+
 	public CreateRadialBlobProps BlobProps { get; init; } = new()
 	{
 		MinRadius = 8,

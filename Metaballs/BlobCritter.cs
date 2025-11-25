@@ -1,3 +1,5 @@
+using System.Reflection.Metadata;
+using Metaballs.Behaviors;
 using Metaballs.Props;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -15,6 +17,7 @@ class BlobCritter : IEventHandler
 	#region Fields
 
 	private readonly EventBlobCollection _blobs;
+	private readonly List<BlobCritterBehavior> _behaviors = new();
 
 	#endregion
 
@@ -34,6 +37,11 @@ class BlobCritter : IEventHandler
 		{
 			_blobs.Add(new EventBlob(factory.CreateRadialBlob(Position, props.BlobProps)));
 		}
+
+		BaseRadius = _blobs.Max(x => x.Radius) * 2;
+		MaxRadius = BaseRadius * (1 + props.StretchScale);
+
+		_behaviors.Add(new MouseFollowingBlobCritterBehavior(this));
 	}
 
 	#endregion
@@ -44,6 +52,9 @@ class BlobCritter : IEventHandler
 	public Vector2 Velocity { get; set; } = Vector2.Zero;
 	public float Speed { get; set; }
 	public float Friction { get; set; }
+
+	private float BaseRadius { get; set; }
+	private float MaxRadius { get; set; }
 
 	#endregion
 
@@ -56,6 +67,11 @@ class BlobCritter : IEventHandler
 
 	public void Update(GameTime gameTime)
 	{
+		foreach (var behavior in _behaviors)
+		{
+			behavior.Update(gameTime);
+		}
+
 		Parallel.ForEach(_blobs, blob =>
 		{
 			// Calculate the acceleration for this frame.
@@ -72,17 +88,42 @@ class BlobCritter : IEventHandler
 			var springForce = distFromTarget * distFromTarget * 1.5f / 10f; // * 0.1f;
 
 			blob.Velocity += (float)gameTime.ElapsedTime.TotalSeconds * direction * springForce * blob.Radius / Friction;
+
+			// Note: This code doesn't work.  I need to give each Blob some kind of IBoundingArea.
+			// if ((Position - blob.Position).Length > MaxRadius)
+			// {
+			// 	blob.Velocity = -blob.Velocity;
+			// }
+
+			// if (Left < 0 || Right >= rc.Width)
+			// {
+			// 	Velocity = new Vector2(-Velocity.X, Velocity.Y);
+			// }
+			// if (Top < 0 || Bottom >= rc.Height)
+			// {
+			// 	Velocity = new Vector2(Velocity.X, -Velocity.Y);
+			// }
 		});
 		_blobs.Update(gameTime);
 
 		Position += Velocity * Speed * (float)gameTime.ElapsedTime.TotalSeconds;
 
+		// Bounds off the screen walls?
+		// if (Position.X < 0 || Position.X >= rc.Width)
+		// {
+		// 	Velocity = new Vector2(-Velocity.X, Velocity.Y);
+		// }
+		// if (Top < 0 || Bottom >= rc.Height)
+		// {
+		// 	Velocity = new Vector2(Velocity.X, -Velocity.Y);
+		// }
+
 		// After the critter moves in its chosen direction, they get pulled back a bit by their own inertia towards the center of mass.
-		var centerOfMass = _blobs.CenterOfMass;
-		var inertia = Speed / 2;
-		var massDistance = centerOfMass - Position;
-		var massDirection = massDistance.Normalized();
-		Position += massDirection * inertia * (float)gameTime.ElapsedTime.TotalSeconds;
+		// var centerOfMass = _blobs.CenterOfMass;
+		// var inertia = Speed / 2;
+		// var massDistance = centerOfMass - Position;
+		// var massDirection = massDistance.Normalized();
+		// Position += massDirection * inertia * (float)gameTime.ElapsedTime.TotalSeconds;
 	}
 
 	public void Add(EventBlob blob)
@@ -97,42 +138,71 @@ class BlobCritter : IEventHandler
 
 	public bool MouseMove(MouseMoveEventArgs e)
 	{
-		// Note: This is more of a "mouse-following" behavior.
-		var distance = e.Position - Position;
-		var direction = distance.Normalized();
-		Velocity = direction;
-		Speed = 0.5f * distance.Length;
+		foreach (var behavior in _behaviors)
+		{
+			behavior.MouseMove(e);
+		}
 
 		return _blobs.MouseMove(e);
 	}
 
 	public bool MouseDown(MouseButtonEventArgs e)
 	{
+		foreach (var behavior in _behaviors)
+		{
+			behavior.MouseDown(e);
+		}
+
 		return _blobs.MouseDown(e);
 	}
 
 	public bool MouseUp(MouseButtonEventArgs e)
 	{
+		foreach (var behavior in _behaviors)
+		{
+			behavior.MouseUp(e);
+		}
+
 		return _blobs.MouseUp(e);
 	}
 
 	public bool MouseWheel(MouseWheelEventArgs e)
 	{
+		foreach (var behavior in _behaviors)
+		{
+			behavior.MouseWheel(e);
+		}
+
 		return _blobs.MouseWheel(e);
 	}
 
 	public bool KeyDown(KeyboardKeyEventArgs e)
 	{
+		foreach (var behavior in _behaviors)
+		{
+			behavior.KeyDown(e);
+		}
+
 		return _blobs.KeyDown(e);
 	}
 
 	public bool KeyUp(KeyboardKeyEventArgs e)
 	{
+		foreach (var behavior in _behaviors)
+		{
+			behavior.KeyUp(e);
+		}
+
 		return _blobs.KeyUp(e);
 	}
 
 	public bool TextInput(TextInputEventArgs e)
 	{
+		foreach (var behavior in _behaviors)
+		{
+			behavior.TextInput(e);
+		}
+
 		return _blobs.TextInput(e);
 	}
 

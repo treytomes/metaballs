@@ -40,15 +40,6 @@ class Blob
 
 	public void Render(IRenderingContext rc)
 	{
-		// Note: Disabling the bounce.  Doesn't play with with the sticky blob collection.
-		if (Left < 0 || Right >= rc.Width)
-		{
-			Velocity = new Vector2(-Velocity.X, Velocity.Y);
-		}
-		if (Top < 0 || Bottom >= rc.Height)
-		{
-			Velocity = new Vector2(Velocity.X, -Velocity.Y);
-		}
 		if (DrawOutline)
 		{
 			rc.RenderCircle(Position, Radius, Color);
