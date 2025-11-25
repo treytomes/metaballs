@@ -1,6 +1,6 @@
 namespace RetroTK.IO;
 
-interface ICloneable<T> : ICloneable
+public interface ICloneable<T> : ICloneable
 {
 	new T Clone();
 }

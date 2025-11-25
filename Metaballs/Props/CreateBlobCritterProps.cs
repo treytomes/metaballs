@@ -5,7 +5,6 @@ record CreateBlobCritterProps
 	public int MinNumBlobs { get; init; } = 3;
 	public int MaxNumBlobs { get; init; } = 5;
 
-	// Much more natural speed range
 	public float MinSpeed { get; init; } = 150f;
 	public float MaxSpeed { get; init; } = 250f;
 
@@ -19,6 +18,6 @@ record CreateBlobCritterProps
 	{
 		MinRadius = 8,
 		MaxRadius = 16,
-		DrawOutline = true
+		DrawOutline = false
 	};
 }

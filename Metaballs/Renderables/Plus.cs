@@ -3,27 +3,66 @@ using RetroTK.Gfx;
 
 namespace Metaballs.Renderables;
 
-class Plus(Vector2 position, int size, RadialColor color)
+class Plus : BaseRenderable
 {
 	#region Properties
 
-	public Vector2 Position { get; set; } = position;
-	public int Width { get; set; } = size;
-	public int Height { get; set; } = size;
-	public RadialColor VerticalColor { get; set; } = color;
-	public RadialColor HorizontalColor { get; set; } = color;
+	public int Width { get; set; }
+	public int Height { get; set; }
+	public RadialColor VerticalColor { get; set; }
+	public RadialColor HorizontalColor { get; set; }
 
-	private int HorizontalRadius => Height / 2;
+	public int Size
+	{
+		get
+		{
+			return Width;
+		}
+		set
+		{
+			Width = value;
+			Height = value;
+		}
+	}
+
+	public RadialColor Color
+	{
+		get
+		{
+			return VerticalColor;
+		}
+		set
+		{
+			VerticalColor = value;
+			HorizontalColor = value;
+		}
+	}
+
+	private int HorizontalRadius => Width / 2;
 	private int VerticalRadius => Height / 2;
 
 	#endregion
 
 	#region Methods
 
-	public void Render(IRenderingContext rc)
+	public override void Render(IRenderingContext rc)
 	{
-		rc.RenderLine(Position - Vector2.UnitX * HorizontalRadius, Position + Vector2.UnitX * HorizontalRadius, HorizontalColor);
-		rc.RenderLine(Position - Vector2.UnitY * VerticalRadius, Position + Vector2.UnitY * VerticalRadius, VerticalColor);
+		if (!IsVisible) return;
+
+		rc.RenderLine(GlobalPosition - Vector2.UnitX * HorizontalRadius, GlobalPosition + Vector2.UnitX * HorizontalRadius, HorizontalColor);
+		rc.RenderLine(GlobalPosition - Vector2.UnitY * VerticalRadius, GlobalPosition + Vector2.UnitY * VerticalRadius, VerticalColor);
+	}
+
+	public override IRenderable Clone()
+	{
+		return new Plus()
+		{
+			Position = Position,
+			Width = Width,
+			Height = Height,
+			VerticalColor = VerticalColor,
+			HorizontalColor = HorizontalColor,
+		};
 	}
 
 	#endregion

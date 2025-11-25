@@ -15,7 +15,6 @@ class MouseFollowingBlobCritterBehavior : BlobCritterBehavior
 	/// The speed with which the critter will adjust to the mouse position.
 	/// </summary>
 	private const float RESPONSIVENESS = 0.5f;
-	// private const float RESPONSIVENESS = 20f;
 
 	private const float SPEED_DAMPING = 0.1f;
 

@@ -20,7 +20,7 @@ class BlobCritter : IEventHandler
 	/// <summary>
 	/// Cohesion keeping the spring from moving.
 	/// </summary>
-	private const float SpringStiffness = 45f;
+	private const float SPRING_STIFFNESS = 45f;
 
 	/// <summary>
 	/// Prevents jitter.
@@ -33,6 +33,8 @@ class BlobCritter : IEventHandler
 	/// </summary>
 	private const float CENTER_PULL = 1.2f;
 
+	private const bool SHOW_TARGET = false;
+
 	#endregion
 
 	#region Fields
@@ -40,7 +42,8 @@ class BlobCritter : IEventHandler
 	private readonly EventBlobCollection _blobs;
 	private readonly List<BlobCritterBehavior> _behaviors = new();
 	private readonly IBoundingArea _bounds;
-	private readonly Plus _plus = new(Vector2.Zero, 6, RadialColor.Yellow);
+
+	private readonly AggregateRenderable _target = new();
 
 	#endregion
 
@@ -50,9 +53,12 @@ class BlobCritter : IEventHandler
 	{
 		_blobs = new(settings, width, height);
 
-		Position = position;
 		Speed = props.MinSpeed + Random.Shared.NextSingle() * (props.MaxSpeed - props.MinSpeed);
 		Friction = props.MinFriction + Random.Shared.NextSingle() * (props.MaxFriction - props.MinFriction);
+
+		Position = position;
+
+		_behaviors.Add(new MouseFollowingBlobCritterBehavior(this));
 
 		var factory = new BlobFactory(settings);
 		var numBlobs = Random.Shared.Next(props.MinNumBlobs, props.MaxNumBlobs + 1);
@@ -62,10 +68,22 @@ class BlobCritter : IEventHandler
 		}
 
 		var baseRadius = _blobs.Max(x => x.Radius) * 2;
+		var radius = (int)(baseRadius * props.StretchScale);
+		_bounds = new CircleBoundingArea(Position, radius);
 
-		_bounds = new CircleBoundingArea(Position, baseRadius * props.StretchScale);
+		_target.Add(new Plus()
+		{
+			Size = 6,
+			Color = RadialColor.Yellow,
+		});
 
-		_behaviors.Add(new MouseFollowingBlobCritterBehavior(this));
+		_target.Add(new Circle()
+		{
+			Radius = radius,
+			OutlineColor = RadialColor.Yellow,
+		});
+
+		_target.IsVisible = SHOW_TARGET;
 	}
 
 	#endregion
@@ -77,11 +95,11 @@ class BlobCritter : IEventHandler
 	{
 		get
 		{
-			return _plus.Position;
+			return _target.Position;
 		}
 		private set
 		{
-			_plus.Position = value;
+			_target.Position = value;
 		}
 	}
 
@@ -96,8 +114,7 @@ class BlobCritter : IEventHandler
 	public void Render(IRenderingContext rc)
 	{
 		_blobs.Render(rc);
-		_plus.Render(rc);
-		rc.RenderCircle(_bounds.Position, (int)(_bounds as CircleBoundingArea)!.Radius, RadialColor.Yellow);
+		_target.Render(rc);
 	}
 
 	public void Update(GameTime gameTime)
@@ -126,7 +143,7 @@ class BlobCritter : IEventHandler
 			var displacement = dist - targetDist;
 
 			// Hooke’s law spring force.
-			var springForceMag = SpringStiffness * displacement;
+			var springForceMag = SPRING_STIFFNESS * displacement;
 
 			// Velocity along spring axis (for damping).
 			var radialVel = Vector2.Dot(blob.Velocity - Velocity, direction);

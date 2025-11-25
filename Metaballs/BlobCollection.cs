@@ -10,12 +10,22 @@ namespace Metaballs;
 class BlobCollection<TBlob> : IEnumerable<TBlob>
 	where TBlob : Blob
 {
+	#region Constants
+
+	private const bool SHOW_CENTER_OF_MASS = false;
+
+	#endregion
+
 	#region Fields
 
 	private readonly MetaballsSettings _settings;
 	protected readonly List<TBlob> _blobs;
 	private readonly SampleMap _samples;
-	private Plus _plus = new(Vector2.Zero, 6, RadialColor.Red);
+	private Plus _plus = new()
+	{
+		Size = 6,
+		Color = RadialColor.Red,
+	};
 
 	#endregion
 
@@ -30,6 +40,8 @@ class BlobCollection<TBlob> : IEnumerable<TBlob>
 		OutlineColor = new RadialColor(5, 0, 5);
 		PrimaryColor = new RadialColor(0, 5, 0);
 		SecondaryColor = new RadialColor(0, 2, 0);
+
+		_plus.IsVisible = SHOW_CENTER_OF_MASS;
 	}
 
 	#endregion
