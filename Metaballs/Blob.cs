@@ -1,3 +1,4 @@
+using Metaballs.Bounds;
 using OpenTK.Mathematics;
 using RetroTK;
 using RetroTK.Gfx;
@@ -46,11 +47,20 @@ class Blob
 		}
 	}
 
-	public void Update(GameTime gameTime)
+	public void Update(GameTime gameTime, IBoundingArea? bounds = null)
 	{
 		if (IsActive)
 		{
 			Position += Velocity * (float)gameTime.ElapsedTime.TotalSeconds;
+
+			if (bounds != null)
+			{
+				if (bounds != null && !bounds.Contains(Position))
+				{
+					Position = bounds.Clamp(Position);
+					Velocity = bounds.ReflectVelocity(Position, Velocity);
+				}
+			}
 		}
 	}
 

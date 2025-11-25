@@ -1,4 +1,5 @@
 using System.Collections;
+using Metaballs.Bounds;
 using Metaballs.Renderables;
 using OpenTK.Mathematics;
 using RetroTK;
@@ -173,9 +174,9 @@ class BlobCollection<TBlob> : IEnumerable<TBlob>
 	/// Updates the state.
 	/// </summary>
 	/// <param name="gameTime">Timing values for the current frame.</param>
-	public virtual void Update(GameTime gameTime)
+	public virtual void Update(GameTime gameTime, IBoundingArea? bounds = null)
 	{
-		Parallel.ForEach(_blobs, blob => blob.Update(gameTime));
+		Parallel.ForEach(_blobs, blob => blob.Update(gameTime, bounds));
 		CenterOfMass = CalculateCenterOfMass();
 	}
 

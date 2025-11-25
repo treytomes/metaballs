@@ -8,6 +8,15 @@ class MouseFollowingBlobCritterBehavior : BlobCritterBehavior
 {
 	private Vector2? _trackingPosition = null;
 
+	private const float MaxAcceleration = 600f;
+	private const float MaxSpeed = 800f;
+
+	/// <summary>
+	/// The speed with which the critter will adjust to the mouse position.
+	/// </summary>
+	private const float Responsiveness = 0.5f;
+	// private const float Responsiveness = 20f;
+
 	public MouseFollowingBlobCritterBehavior(BlobCritter owner)
 		: base(owner)
 	{
@@ -17,12 +26,38 @@ class MouseFollowingBlobCritterBehavior : BlobCritterBehavior
 	{
 		base.Update(gameTime);
 
-		if (!_trackingPosition.HasValue) return;
+		if (!_trackingPosition.HasValue)
+			return;
 
-		var distance = _trackingPosition.Value - Owner.Position;
-		var direction = distance.Normalized();
-		Owner.Velocity = direction;
-		Owner.Speed = distance.Length;
+		float dt = (float)gameTime.ElapsedTime.TotalSeconds;
+
+		// --- Compute desired velocity ---
+		var toMouse = _trackingPosition.Value - Owner.Position;
+		float dist = toMouse.Length;
+
+		if (dist < 1f)
+			return;
+
+		var direction = toMouse / dist;
+
+		// Speed proportional to distance, but capped
+		float targetSpeed = MathF.Min(dist * 4f, MaxSpeed);
+
+		Vector2 targetVelocity = direction * targetSpeed;
+
+		// --- Smooth velocity change ---
+		// dV/dt = (targetVelocity - currentVelocity) * Responsiveness
+		Vector2 desiredDelta = (targetVelocity - Owner.Velocity) * Responsiveness;
+
+		// clamp acceleration magnitude
+		float desiredAccelLength = desiredDelta.Length;
+		if (desiredAccelLength > MaxAcceleration)
+			desiredDelta = desiredDelta / desiredAccelLength * MaxAcceleration;
+
+		Owner.Velocity += desiredDelta * dt;
+
+		// Update critter speed property for outside use (optional)
+		Owner.Speed = 4;  //Owner.Velocity.Length;
 	}
 
 	public override bool MouseMove(MouseMoveEventArgs e)
@@ -31,3 +66,4 @@ class MouseFollowingBlobCritterBehavior : BlobCritterBehavior
 		return true;
 	}
 }
+

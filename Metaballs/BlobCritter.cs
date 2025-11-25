@@ -1,6 +1,7 @@
-using System.Reflection.Metadata;
 using Metaballs.Behaviors;
+using Metaballs.Bounds;
 using Metaballs.Props;
+using Metaballs.Renderables;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using RetroTK;
@@ -9,7 +10,7 @@ using RetroTK.Gfx;
 
 namespace Metaballs;
 
-// Note: A stick blob collection will pull all of it's blobs towards the center of mass.
+// Note: A sticky blob collection will pull all of it's blobs towards the center of mass.
 // Each blob will need a velocity.  There should also be some kind of spring constant.
 
 class BlobCritter : IEventHandler
@@ -18,6 +19,8 @@ class BlobCritter : IEventHandler
 
 	private readonly EventBlobCollection _blobs;
 	private readonly List<BlobCritterBehavior> _behaviors = new();
+	private readonly IBoundingArea _bounds;
+	private readonly Plus _plus = new(Vector2.Zero, 6, RadialColor.Yellow);
 
 	#endregion
 
@@ -38,8 +41,9 @@ class BlobCritter : IEventHandler
 			_blobs.Add(new EventBlob(factory.CreateRadialBlob(Position, props.BlobProps)));
 		}
 
-		BaseRadius = _blobs.Max(x => x.Radius) * 2;
-		MaxRadius = BaseRadius * (1 + props.StretchScale);
+		var baseRadius = _blobs.Max(x => x.Radius) * 2;
+
+		_bounds = new CircleBoundingArea(Position, baseRadius * props.StretchScale);
 
 		_behaviors.Add(new MouseFollowingBlobCritterBehavior(this));
 	}
@@ -48,13 +52,22 @@ class BlobCritter : IEventHandler
 
 	#region Properties
 
-	public Vector2 Position { get; private set; }
+
+	public Vector2 Position
+	{
+		get
+		{
+			return _plus.Position;
+		}
+		private set
+		{
+			_plus.Position = value;
+		}
+	}
+
 	public Vector2 Velocity { get; set; } = Vector2.Zero;
 	public float Speed { get; set; }
 	public float Friction { get; set; }
-
-	private float BaseRadius { get; set; }
-	private float MaxRadius { get; set; }
 
 	#endregion
 
@@ -63,67 +76,80 @@ class BlobCritter : IEventHandler
 	public void Render(IRenderingContext rc)
 	{
 		_blobs.Render(rc);
+		_plus.Render(rc);
+		rc.RenderCircle(_bounds.Position, (int)(_bounds as CircleBoundingArea)!.Radius, RadialColor.Yellow);
 	}
 
 	public void Update(GameTime gameTime)
 	{
-		foreach (var behavior in _behaviors)
-		{
-			behavior.Update(gameTime);
-		}
+		float dt = (float)gameTime.ElapsedTime.TotalSeconds;
 
+		// --- Physical constants ---
+		const float SpringStiffness = 45f;  // stronger cohesion
+		const float SpringDamping = 10f;  // prevents jitter
+		const float MassScalar = 1f;
+		const float CenterPull = 1.2f; // helps goo stay cohesive
+
+		// --- Apply spring forces to each blob in parallel ---
 		Parallel.ForEach(_blobs, blob =>
 		{
-			// Calculate the acceleration for this frame.
+			float mass = blob.Radius * MassScalar;
 
-			var distVector = Position - blob.Position;
-			// var distance = distVector.Length;
-			var direction = distVector.Normalized();
+			// Desired "rest" position of the blob
+			Vector2 toBlob = blob.Position - Position;
+			float dist = toBlob.Length;
 
-			var targetPosition = Position - direction * blob.Radius;
+			Vector2 direction;
+			if (dist > 0f)
+				direction = toBlob / dist;
+			else
+				direction = Vector2.UnitX; // arbitrary but safe fallback
 
-			var distFromTarget = (targetPosition - blob.Position).Length;
+			// Desired distance from center
+			float targetDist = blob.Radius * 0.5f;
 
-			// The distance should make a bigger difference on acceleration as the blob gets further away.
-			var springForce = distFromTarget * distFromTarget * 1.5f / 10f; // * 0.1f;
+			// Signed displacement
+			float displacement = dist - targetDist;
 
-			blob.Velocity += (float)gameTime.ElapsedTime.TotalSeconds * direction * springForce * blob.Radius / Friction;
+			// Hooke’s law spring force
+			float springForceMag = SpringStiffness * displacement;
 
-			// Note: This code doesn't work.  I need to give each Blob some kind of IBoundingArea.
-			// if ((Position - blob.Position).Length > MaxRadius)
-			// {
-			// 	blob.Velocity = -blob.Velocity;
-			// }
+			// Velocity along spring axis (for damping)
+			float radialVel = Vector2.Dot(blob.Velocity - Velocity, direction);
+			float dampingForceMag = -SpringDamping * radialVel;
 
-			// if (Left < 0 || Right >= rc.Width)
-			// {
-			// 	Velocity = new Vector2(-Velocity.X, Velocity.Y);
-			// }
-			// if (Top < 0 || Bottom >= rc.Height)
-			// {
-			// 	Velocity = new Vector2(Velocity.X, -Velocity.Y);
-			// }
+			// Combined force (scalar)
+			float totalForceMag = springForceMag + dampingForceMag;
+
+			// Convert scalar → vector
+			Vector2 force = direction * totalForceMag;
+
+			// Apply acceleration
+			blob.Velocity += (force / mass) * dt;
 		});
-		_blobs.Update(gameTime);
 
-		Position += Velocity * Speed * (float)gameTime.ElapsedTime.TotalSeconds;
+		// --- Update blob positions + clamp to bounding area ---
+		Position += Velocity * Speed * dt;
+		_bounds.MoveTo(Position);
+		_blobs.Update(gameTime, _bounds); // your reflection logic applies here
 
-		// Bounds off the screen walls?
-		// if (Position.X < 0 || Position.X >= rc.Width)
-		// {
-		// 	Velocity = new Vector2(-Velocity.X, Velocity.Y);
-		// }
-		// if (Top < 0 || Bottom >= rc.Height)
-		// {
-		// 	Velocity = new Vector2(Velocity.X, -Velocity.Y);
-		// }
+		// --- Optional: pull center toward the blob cluster ---
+		// This prevents the center from drifting and makes the critter act cohesive.
+		Vector2 com = _blobs.CenterOfMass;
+		Vector2 comOffset = com - Position;
 
-		// After the critter moves in its chosen direction, they get pulled back a bit by their own inertia towards the center of mass.
-		// var centerOfMass = _blobs.CenterOfMass;
-		// var inertia = Speed / 2;
-		// var massDistance = centerOfMass - Position;
-		// var massDirection = massDistance.Normalized();
-		// Position += massDirection * inertia * (float)gameTime.ElapsedTime.TotalSeconds;
+		if (comOffset.LengthSquared > 0.0001f)
+		{
+			Vector2 comDir = comOffset.Normalized();
+			Velocity += comDir * CenterPull * dt;
+		}
+
+		// --- Apply critter-wide friction ---
+		Velocity *= (1f - Friction * dt);
+
+		// Update behaviors (mouse chasing, wandering, etc.)
+		foreach (var behavior in _behaviors)
+			behavior.Update(gameTime);
 	}
 
 	public void Add(EventBlob blob)
