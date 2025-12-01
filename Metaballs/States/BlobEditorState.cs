@@ -40,7 +40,7 @@ class BlobEditorState : GameState
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_blobFactory = new BlobFactory(_settings);
-		_blobs = new EventBlobCollection(_settings.Metaballs, rc.Width, rc.Height);
+		_blobs = new EventBlobCollection(_settings, new());
 	}
 
 	#endregion

@@ -50,7 +50,7 @@ class MapCarvingState : GameState
 		: base(resources, rc)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		_samples = new(_settings.Metaballs, rc.Width, rc.Height);
+		_samples = new(_settings, new());
 		_samples.Fill(2);
 		_grid = new()
 		{

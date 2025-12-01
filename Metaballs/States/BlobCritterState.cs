@@ -1,3 +1,5 @@
+using Metaballs.Props;
+using Metaballs.Renderables;
 using RetroTK;
 using RetroTK.Gfx;
 using RetroTK.Services;
@@ -6,8 +8,6 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
 using MouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
-using Metaballs.Props;
-using Metaballs.Renderables;
 
 namespace Metaballs.States;
 
@@ -16,11 +16,11 @@ class BlobCritterState : GameState
 	#region Fields
 
 	private readonly MetaballsAppSettings _settings;
-	private bool _isMouseDown = false;
+	// private bool _isMouseDown = false;
 	private Vector2 _mousePosition = Vector2.Zero;
 
 	private BlobFactory _blobFactory;
-	private BlobCritter _blobs;
+	private List<BlobCritter> _critters = new();
 	private Grid _grid;
 
 	#endregion
@@ -37,7 +37,16 @@ class BlobCritterState : GameState
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_blobFactory = new BlobFactory(_settings);
-		_blobs = new BlobCritter(_settings, rc.Width, rc.Height, new Vector2(150, 150), new CreateBlobCritterProps());
+		_critters.Add(new BlobCritter(_settings, new()
+		{
+			OutlineColor = new RadialColor(5, 0, 5),
+			FillColor = new RadialColor(0, 5, 0),
+		}, new Vector2(250, 200), new CreateBlobCritterProps()));
+		_critters.Add(new BlobCritter(_settings, new()
+		{
+			OutlineColor = new RadialColor(5, 0, 5),
+			FillColor = new RadialColor(5, 5, 0),
+		}, new Vector2(150, 150), new CreateBlobCritterProps()));
 
 		_grid = new()
 		{
@@ -54,38 +63,6 @@ class BlobCritterState : GameState
 	#region Methods
 
 	/// <summary>
-	/// Loads resources and initializes the state.
-	/// </summary>
-	public override void Load()
-	{
-		base.Load();
-	}
-
-	/// <summary>
-	/// Unloads resources and cleans up the state.
-	/// </summary>
-	public override void Unload()
-	{
-		base.Unload();
-	}
-
-	/// <summary>
-	/// Called when this state becomes the active state.
-	/// </summary>
-	public override void AcquireFocus()
-	{
-		base.AcquireFocus();
-	}
-
-	/// <summary>
-	/// Called when this state is no longer the active state.
-	/// </summary>
-	public override void LostFocus()
-	{
-		base.LostFocus();
-	}
-
-	/// <summary>
 	/// Renders the state.
 	/// </summary>
 	/// <param name="gameTime">Timing values for the current frame.</param>
@@ -99,7 +76,12 @@ class BlobCritterState : GameState
 			_grid.Render(RC);
 		}
 
-		_blobs.Render(RC);
+		// Note: Running this in parallel led to a racing condition.
+		// Parallel.ForEach(_critters, c => c.Render(RC));
+		foreach (var c in _critters)
+		{
+			c.Render(RC);
+		}
 
 		base.Render(gameTime);
 	}
@@ -112,29 +94,17 @@ class BlobCritterState : GameState
 	{
 		base.Update(gameTime);
 
-		_blobs.Update(gameTime);
-	}
-
-	/// <summary>
-	/// Handles key down events.
-	/// </summary>
-	/// <param name="e">Key event arguments.</param>
-	/// <returns>True if the event was handled; otherwise, false.</returns>
-	public override bool KeyDown(KeyboardKeyEventArgs e)
-	{
-		return base.KeyDown(e);
-	}
-
-	public override bool KeyUp(KeyboardKeyEventArgs e)
-	{
-		return base.KeyUp(e);
+		Parallel.ForEach(_critters, c => c.Update(gameTime));
 	}
 
 	public override bool MouseWheel(MouseWheelEventArgs e)
 	{
-		if (_blobs.MouseWheel(e))
+		foreach (var c in _critters)
 		{
-			return true;
+			if (c.MouseWheel(e))
+			{
+				return true;
+			}
 		}
 		return base.MouseWheel(e);
 	}
@@ -148,7 +118,13 @@ class BlobCritterState : GameState
 	{
 		_mousePosition = e.Position;
 
-		if (_blobs.MouseMove(e)) return true;
+		foreach (var c in _critters)
+		{
+			if (c.MouseMove(e))
+			{
+				return true;
+			}
+		}
 
 		return base.MouseMove(e);
 	}
@@ -160,16 +136,24 @@ class BlobCritterState : GameState
 	/// <returns>True if the event was handled; otherwise, false.</returns>
 	public override bool MouseDown(MouseButtonEventArgs e)
 	{
-		if (_blobs.MouseDown(e)) return true;
-
-		if (e.Button == MouseButton.Left)
+		foreach (var c in _critters)
 		{
-			if (_blobFactory == null) return false;
-			var blob = _blobFactory.CreateRandomBlob(new System.Drawing.Rectangle(0, 0, RC.Width, RC.Height));
-			blob.MoveTo(_mousePosition);
-			_blobs.Add(new EventBlob(blob));
-			return true;
+			if (c.MouseDown(e))
+			{
+				return true;
+			}
 		}
+
+		// TODO: Implement `Contains` on blob critter.
+		// var mouseHover = _critters.First(c => c.Contains(_mousePosition));
+		// if (e.Button == MouseButton.Left)
+		// {
+		// 	if (_blobFactory == null) return false;
+		// 	var blob = _blobFactory.CreateRandomBlob(new System.Drawing.Rectangle(0, 0, RC.Width, RC.Height));
+		// 	blob.MoveTo(_mousePosition);
+		// 	mouseHover.Add(new EventBlob(blob));
+		// 	return true;
+		// }
 
 		return false;
 	}
@@ -187,7 +171,13 @@ class BlobCritterState : GameState
 		// 	return true;
 		// }
 
-		if (_blobs.MouseUp(e)) return true;
+		foreach (var c in _critters)
+		{
+			if (c.MouseUp(e))
+			{
+				return true;
+			}
+		}
 
 		return false;
 	}

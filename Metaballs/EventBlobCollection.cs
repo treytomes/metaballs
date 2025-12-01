@@ -1,3 +1,4 @@
+using Metaballs.Props;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -16,8 +17,8 @@ class EventBlobCollection : BlobCollection<EventBlob>, IEventHandler
 
 	#region Constructors
 
-	public EventBlobCollection(MetaballsSettings settings, int width, int height, IEnumerable<EventBlob>? blobs = null)
-		: base(settings, width, height, blobs ?? Enumerable.Empty<EventBlob>())
+	public EventBlobCollection(MetaballsAppSettings settings, SampleMapProps props, IEnumerable<EventBlob>? blobs = null)
+		: base(settings, props, blobs ?? Enumerable.Empty<EventBlob>())
 	{
 	}
 

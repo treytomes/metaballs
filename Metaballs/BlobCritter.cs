@@ -1,4 +1,5 @@
 using Metaballs.Behaviors;
+using Metaballs.Behaviors.Props;
 using Metaballs.Bounds;
 using Metaballs.Props;
 using Metaballs.Renderables;
@@ -38,7 +39,7 @@ class BlobCritter : IEventHandler
 	#region Fields
 
 	private readonly EventBlobCollection _blobs;
-	private readonly List<BlobCritterBehavior> _behaviors = new();
+	private readonly List<IBlobCritterBehavior> _behaviors = new();
 	private readonly IBoundingArea _bounds;
 
 	private readonly AggregateRenderable _target = new();
@@ -47,16 +48,17 @@ class BlobCritter : IEventHandler
 
 	#region Constructors
 
-	public BlobCritter(MetaballsAppSettings settings, int width, int height, Vector2 position, CreateBlobCritterProps props)
+	public BlobCritter(MetaballsAppSettings settings, SampleMapProps sampleMapProps, Vector2 position, CreateBlobCritterProps props)
 	{
-		_blobs = new(settings.Metaballs, width, height);
+		_blobs = new(settings, sampleMapProps);
 
 		Speed = props.MinSpeed + Random.Shared.NextSingle() * (props.MaxSpeed - props.MinSpeed);
 		Friction = props.MinFriction + Random.Shared.NextSingle() * (props.MaxFriction - props.MinFriction);
 
 		Position = position;
 
-		_behaviors.Add(new MouseFollowingBlobCritterBehavior(this));
+		var behaviorFactory = new BehaviorFactory();
+		_behaviors.AddRange(props.Behaviors.Select(x => behaviorFactory.Create(this, x)));
 
 		var factory = new BlobFactory(settings);
 		var numBlobs = Random.Shared.Next(props.MinNumBlobs, props.MaxNumBlobs + 1);

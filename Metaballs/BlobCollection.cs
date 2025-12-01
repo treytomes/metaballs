@@ -1,5 +1,6 @@
 using System.Collections;
 using Metaballs.Bounds;
+using Metaballs.Props;
 using Metaballs.Renderables;
 using OpenTK.Mathematics;
 using RetroTK;
@@ -10,15 +11,9 @@ namespace Metaballs;
 class BlobCollection<TBlob> : IEnumerable<TBlob>
 	where TBlob : Blob
 {
-	#region Constants
-
-	private const bool SHOW_CENTER_OF_MASS = false;
-
-	#endregion
-
 	#region Fields
 
-	private readonly MetaballsSettings _settings;
+	private readonly MetaballsAppSettings _settings;
 	protected readonly List<TBlob> _blobs;
 	private readonly SampleMap _samples;
 	private Plus _plus = new()
@@ -31,17 +26,13 @@ class BlobCollection<TBlob> : IEnumerable<TBlob>
 
 	#region Constructors
 
-	public BlobCollection(MetaballsSettings settings, int width, int height, IEnumerable<TBlob>? blobs = null)
+	public BlobCollection(MetaballsAppSettings settings, SampleMapProps props, IEnumerable<TBlob>? blobs = null)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		_samples = new SampleMap(settings, width, height);
+		_samples = new SampleMap(settings, props);
 		_blobs = [.. blobs ?? Enumerable.Empty<TBlob>()];
 
-		OutlineColor = new RadialColor(5, 0, 5);
-		PrimaryColor = new RadialColor(0, 5, 0);
-		SecondaryColor = new RadialColor(0, 2, 0);
-
-		_plus.IsVisible = SHOW_CENTER_OF_MASS;
+		_plus.IsVisible = settings.Debug;
 	}
 
 	#endregion
@@ -72,27 +63,15 @@ class BlobCollection<TBlob> : IEnumerable<TBlob>
 		}
 	}
 
-	public RadialColor PrimaryColor
+	public RadialColor FillColor
 	{
 		get
 		{
-			return _samples.PrimaryFillColor;
+			return _samples.FillColor;
 		}
 		set
 		{
-			_samples.PrimaryFillColor = value;
-		}
-	}
-
-	public RadialColor SecondaryColor
-	{
-		get
-		{
-			return _samples.SecondaryFillColor;
-		}
-		set
-		{
-			_samples.SecondaryFillColor = value;
+			_samples.FillColor = value;
 		}
 	}
 
@@ -203,8 +182,8 @@ class BlobCollection<TBlob> : IEnumerable<TBlob>
 
 	private float? CalculateSample(int sx, int sy)
 	{
-		var x = sx * _settings.GridResolution;
-		var y = sy * _settings.GridResolution;
+		var x = sx * _settings.Metaballs.GridResolution;
+		var y = sy * _settings.Metaballs.GridResolution;
 
 		var sample = 0f;
 		foreach (var b in _blobs)

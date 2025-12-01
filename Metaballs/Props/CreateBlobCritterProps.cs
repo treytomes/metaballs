@@ -1,3 +1,5 @@
+using Metaballs.Behaviors.Props;
+
 namespace Metaballs.Props;
 
 record CreateBlobCritterProps
@@ -18,5 +20,16 @@ record CreateBlobCritterProps
 	{
 		MinRadius = 8,
 		MaxRadius = 16,
+	};
+
+	public List<BlobCritterBehaviorProps> Behaviors { get; init; } = new()
+	{
+		new MouseFollowingBlobCritterBehaviorProps()
+		{
+			MaxAcceleration = 50f,
+			MaxSpeed = 200f,
+			Responsiveness = 0.5f,
+			SpeedDamping = 0.05f,
+		},
 	};
 }

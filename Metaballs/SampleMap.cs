@@ -1,3 +1,4 @@
+using Metaballs.Props;
 using OpenTK.Mathematics;
 using RetroTK.Gfx;
 
@@ -21,35 +22,43 @@ class SampleMap
 
 	#region Fields
 
-	private readonly MetaballsSettings _settings;
+	private readonly MetaballsAppSettings _settings;
 	private float[,] _data;
+	private readonly SampleMapProps _props;
 
 	#endregion
 
 	#region Constructors
 
-	public SampleMap(MetaballsSettings settings, int width, int height)
+	public SampleMap(MetaballsAppSettings settings, SampleMapProps props)
 	{
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
-		Width = width;
-		Height = height;
-		_data = new float[height, width];
+		_props = props;
+		_data = new float[settings.VirtualDisplay.Height, settings.VirtualDisplay.Width];
 		Array.Clear(_data);
+
+		OutlineColor = _props.OutlineColor;
+		FillColor = _props.FillColor;
+
+		IsOutlined = _props.IsOutlined;
+		IsFilled = _props.IsFilled;
 	}
 
 	#endregion
 
 	#region Properties
 
-	public RadialColor OutlineColor { get; set; } = RadialColor.Yellow;
-	public RadialColor PrimaryFillColor { get; set; } = RadialColor.Gray.Lerp(RadialColor.Black, 0.5f);
-	public RadialColor SecondaryFillColor { get; set; } = RadialColor.Gray.Lerp(RadialColor.Black, 0.75f);
+	public RadialColor OutlineColor { get; set; }
+	public RadialColor FillColor { get; set; }
+	private RadialColor SecondaryFillColor => FillColor.Lerp(RadialColor.Black, 0.5f);
 
-	public bool IsOutlined { get; set; } = true;
-	public bool IsFilled { get; set; } = true;
+	public bool IsOutlined { get; set; }
+	public bool IsFilled { get; set; }
 
-	public int Width { get; }
-	public int Height { get; }
+	// Note: The width and height are based on the size of the viewport.  But what if you want to represent an area larger than the viewport?
+
+	public int Width => _settings.VirtualDisplay.Width;
+	public int Height => _settings.VirtualDisplay.Height;
 
 	public float this[int y, int x]
 	{
@@ -65,8 +74,8 @@ class SampleMap
 		}
 	}
 
-	private bool Interpolated => _settings.Interpolated;
-	private float GridResolution => _settings.GridResolution;
+	private bool Interpolated => _settings.Metaballs.Interpolated;
+	private float GridResolution => _settings.Metaballs.GridResolution;
 
 	#endregion
 
@@ -86,7 +95,7 @@ class SampleMap
 
 	public void Render(IRenderingContext rc)
 	{
-		RenderBayerField(rc, PrimaryFillColor, SecondaryFillColor);
+		RenderBayerField(rc, FillColor, SecondaryFillColor);
 		RenderOutline(rc, OutlineColor);
 	}
 
