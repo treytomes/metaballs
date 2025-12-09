@@ -1,3 +1,4 @@
+using Metaballs.Bounds;
 using OpenTK.Mathematics;
 using RetroTK;
 using RetroTK.Gfx;
@@ -6,31 +7,26 @@ namespace Metaballs;
 
 class Blob
 {
-	#region Fields
-
-	#endregion
-
 	#region Constructors
 
-	public Blob(Vector2 position, int radius)
+	public Blob(Vector2 position, int radius, Vector2? velocity = null)
 	{
 		Position = position;
 		Radius = radius;
-
-		Velocity = new Vector2(
-			(Random.Shared.NextSingle() * 3 - 2) * Random.Shared.NextSingle() * 8 + 8,
-			(Random.Shared.NextSingle() * 3 - 2) * Random.Shared.NextSingle() * 8 + 8
-		);
+		Velocity = velocity ?? Vector2.Zero;
 	}
 
 	#endregion
 
 	#region Properties
 
+	public virtual bool IsActive { get; } = true;
+
+	public bool DrawOutline { get; init; }
 	public Vector2 Position { get; private set; }
 	public int Radius { get; private set; }
-	public RadialColor Color { get; private set; } = RadialColor.Red;
-	public Vector2 Velocity { get; private set; }
+	public virtual RadialColor Color { get; } = RadialColor.Red;
+	public Vector2 Velocity { get; set; } = Vector2.Zero;
 
 	public float Left => Position.X - Radius;
 	public float Right => Position.X + Radius;
@@ -43,33 +39,51 @@ class Blob
 
 	#region Methods
 
-	public static Blob CreateRandom(IRenderingContext rc)
-	{
-		var r = (int)Math.Floor(Random.Shared.NextSingle() * (MetaballsConfig.MaxRadius - MetaballsConfig.MinRadius) + MetaballsConfig.MinRadius);
-		var x = (float)Math.Floor(Random.Shared.NextSingle() * (rc.Width - r * 2) + r);
-		var y = (float)Math.Floor(Random.Shared.NextSingle() * (rc.Height - r * 2) + r);
-		return new Blob(new Vector2(x, y), r);
-	}
-
 	public void Render(IRenderingContext rc)
 	{
-		if (Left < 0 || Right >= rc.Width)
-		{
-			Velocity = new Vector2(-Velocity.X, Velocity.Y);
-		}
-		if (Top < 0 || Bottom >= rc.Height)
-		{
-			Velocity = new Vector2(Velocity.X, -Velocity.Y);
-		}
-		if (MetaballsConfig.DrawCircles)
+		if (DrawOutline)
 		{
 			rc.RenderCircle(Position, Radius, Color);
 		}
 	}
 
-	public void Update(GameTime gameTime)
+	public void Update(GameTime gameTime, IBoundingArea? bounds = null)
 	{
-		Position += Velocity * (float)gameTime.ElapsedTime.TotalSeconds;
+		if (IsActive)
+		{
+			Position += Velocity * (float)gameTime.ElapsedTime.TotalSeconds;
+
+			if (bounds != null)
+			{
+				if (bounds != null && !bounds.Contains(Position))
+				{
+					Position = bounds.Clamp(Position);
+					Velocity = bounds.ReflectVelocity(Position, Velocity);
+				}
+			}
+		}
+	}
+
+	public bool Contains(Vector2 pnt)
+	{
+		var distance = pnt - Position;
+		return distance.LengthSquared <= Radius * Radius;
+	}
+
+	public void SetRadius(int value)
+	{
+		if (value < 1) value = 1;
+		Radius = value;
+	}
+
+	public void MoveBy(Vector2 delta)
+	{
+		Position += delta;
+	}
+
+	public void MoveTo(Vector2 position)
+	{
+		Position = position;
 	}
 
 	#endregion

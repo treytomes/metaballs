@@ -9,12 +9,15 @@
 		"Fract",
 		"glsl",
 		"Lerp",
+		"metaball",
 		"Metaballs",
 		"Newtonsoft",
 		"OPENGL",
 		"ppos",
 		"Rects",
 		"relu",
+		"renderable",
+		"Renderables",
 		"Roguelike",
 		"SSBO",
 		"underpopulation",
@@ -37,6 +40,6 @@
 			"source.fixAll": "always"
 		}
 	},
-	"csharp.debug.expressionEvaluationOptions.allowImplicitFuncEval": false,
+	"csharp.debug.expressionEvaluationOptions.allowImplicitFuncEval": true,
 	"dotnet.defaultSolution": "metaballs.sln",
 }
